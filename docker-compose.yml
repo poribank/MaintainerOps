@@ -1,0 +1,64 @@
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: maintainerops
+      POSTGRES_PASSWORD: maintainerops
+      POSTGRES_DB: maintainerops
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./apps/server/db/schema.sql:/docker-entrypoint-initdb.d/001_schema.sql:ro
+
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+
+  api:
+    build: .
+    command: npm run start --workspace @maintainerops/server
+    environment:
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: 3000
+      WEB_ORIGIN: http://localhost:5173
+      GITHUB_WEBHOOK_SECRET: dev-secret
+      GITHUB_WRITES_ENABLED: "false"
+      STORE_DRIVER: postgres
+      QUEUE_DRIVER: bullmq
+      QUEUE_INLINE_WORKER: "false"
+      DATABASE_URL: postgres://maintainerops:maintainerops@postgres:5432/maintainerops
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      - postgres
+      - redis
+    ports:
+      - "3000:3000"
+
+  web:
+    build: .
+    command: npm run dev --workspace @maintainerops/web -- --host 0.0.0.0 --port 5173
+    environment:
+      VITE_API_BASE: http://localhost:3000
+    depends_on:
+      - api
+    ports:
+      - "5173:5173"
+
+  worker:
+    build: .
+    command: npm run worker --workspace @maintainerops/server
+    environment:
+      NODE_ENV: production
+      QUEUE_DRIVER: bullmq
+      QUEUE_INLINE_WORKER: "true"
+      REDIS_URL: redis://redis:6379
+      SCORECARD_COMMAND: scorecard
+      OSV_SCANNER_COMMAND: osv-scanner
+    depends_on:
+      - redis
+
+volumes:
+  postgres-data:

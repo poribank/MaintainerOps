@@ -1,0 +1,26 @@
+name: Security workflow
+description: Propose or report a security-maintenance workflow gap.
+title: "[Security workflow]: "
+labels:
+  - security
+body:
+  - type: textarea
+    id: workflow
+    attributes:
+      label: Workflow
+      description: Describe the Scorecard, OSV, CODEOWNERS, release, advisory, ruleset, or scanner workflow.
+    validations:
+      required: true
+  - type: textarea
+    id: authorization
+    attributes:
+      label: Repository authorization
+      description: Confirm that any repository named here is owned, maintained, or authorized for review.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected MaintainerOps behavior
+    validations:
+      required: true

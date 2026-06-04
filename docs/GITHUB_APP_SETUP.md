@@ -1,0 +1,114 @@
+# GitHub App Setup
+
+Use this guide to run a dry-run pilot on a repository you own, maintain, or are authorized to administer.
+
+## 1. Register the App
+
+Create a new GitHub App in the organization or account that owns the pilot repository.
+
+Recommended basic settings:
+
+- Webhook URL: `https://<your-host>/webhooks/github`
+- Webhook secret: generate a long random value and set `GITHUB_WEBHOOK_SECRET`.
+- Expire user authorization tokens: enabled.
+- Request user authorization during installation: disabled for the MVP.
+
+## 2. Minimum Permissions
+
+Start with the least-privilege set:
+
+- Metadata: read
+- Contents: read
+- Issues: read/write
+- Pull requests: read/write
+- Checks: write
+
+Optional modules may require additional permissions:
+
+- Contents write: release draft creation
+- Code scanning alerts read: CodeQL/security queue
+- Secret scanning alerts read: secret alert queue
+- Security events read: repository advisory queue
+- Rulesets read: branch/ruleset policy checks
+
+## 3. Webhook Events
+
+Subscribe to:
+
+- `issues`
+- `issue_comment`
+- `pull_request`
+- `pull_request_review`
+- `pull_request_review_comment`
+- `check_suite`
+- `workflow_run`
+- `release`
+- `installation`
+- `installation_repositories`
+
+Optional security events:
+
+- `dependabot_alert`
+- `code_scanning_alert`
+- `secret_scanning_alert`
+- `repository_advisory`
+
+## 4. Local Dry-Run
+
+```sh
+cp .env.example .env
+npm install
+npm run check
+PORT=3000 npm run start --workspace @maintainerops/server
+```
+
+For local webhook testing, expose the API with a trusted tunnel and set the GitHub App webhook URL to the tunnel URL.
+
+Keep these defaults for the first pilot:
+
+```sh
+GITHUB_WRITES_ENABLED=false
+AI_PROVIDER=disabled
+STORE_DRIVER=memory
+QUEUE_DRIVER=memory
+```
+
+## 5. Persistent Pilot
+
+Use PostgreSQL and Redis/BullMQ when you need restart-safe evidence:
+
+```sh
+STORE_DRIVER=postgres \
+DATABASE_URL=postgres://maintainerops:maintainerops@localhost:5432/maintainerops \
+QUEUE_DRIVER=bullmq \
+REDIS_URL=redis://localhost:6379 \
+npm run dev
+```
+
+## 6. Enabling Writes
+
+Only enable writes after dry-run behavior is reviewed:
+
+```sh
+GITHUB_WRITES_ENABLED=true
+```
+
+Write actions still require:
+
+- a real GitHub App installation id from webhook events;
+- explicit API request with `dryRun:false`;
+- action-specific metadata such as `headSha`, `labels`, or `body`;
+- audit log recording.
+
+MaintainerOps does not auto-merge, auto-approve, or auto-request changes.
+
+## 7. Evidence to Capture
+
+For the Codex for Open Source application or follow-up:
+
+- screenshot of the installed GitHub App;
+- screenshot of the maintainer queue with real PR/issue/release work items;
+- output of `GET /api/pilot/metrics`;
+- examples of dry-run recommendations accepted or rejected by maintainers;
+- audit log entries showing approval-gated behavior;
+- screenshots of Scorecard/OSV jobs.

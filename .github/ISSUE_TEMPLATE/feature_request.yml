@@ -1,0 +1,30 @@
+name: Feature request
+description: Propose a maintainer workflow improvement.
+title: "[Feature]: "
+labels:
+  - enhancement
+body:
+  - type: textarea
+    id: workflow
+    attributes:
+      label: Maintainer workflow
+      description: Which PR review, issue triage, release, or security workflow should improve?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal
+      description: Describe the behavior and any relevant GitHub/OpenSSF/OpenAI integration.
+    validations:
+      required: true
+  - type: dropdown
+    id: automation-risk
+    attributes:
+      label: Automation risk
+      options:
+        - Report-only
+        - Approval-gated write
+        - Policy opt-in write
+    validations:
+      required: true

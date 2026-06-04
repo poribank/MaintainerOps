@@ -1,0 +1,24 @@
+{
+  "fixtures": [
+    {
+      "event": "pull_request",
+      "path": "pull_request.opened.json",
+      "description": "Creates a PR work item for review support."
+    },
+    {
+      "event": "issues",
+      "path": "issues.opened.json",
+      "description": "Creates an issue work item for triage support."
+    },
+    {
+      "event": "release",
+      "path": "release.published.json",
+      "description": "Creates a release readiness work item."
+    },
+    {
+      "event": "secret_scanning_alert",
+      "path": "secret_scanning_alert.created.json",
+      "description": "Creates a security work item."
+    }
+  ]
+}

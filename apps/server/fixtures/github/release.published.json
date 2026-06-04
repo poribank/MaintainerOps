@@ -1,0 +1,29 @@
+{
+  "action": "published",
+  "installation": {
+    "id": 123456
+  },
+  "repository": {
+    "id": 1001,
+    "name": "critical-runtime",
+    "full_name": "opensource/critical-runtime",
+    "private": false,
+    "default_branch": "main",
+    "owner": {
+      "login": "opensource"
+    }
+  },
+  "release": {
+    "id": 5001,
+    "tag_name": "v0.1.0",
+    "name": "v0.1.0",
+    "html_url": "https://github.com/opensource/critical-runtime/releases/tag/v0.1.0",
+    "draft": false,
+    "prerelease": false
+  },
+  "sender": {
+    "id": 3003,
+    "login": "release-manager",
+    "type": "User"
+  }
+}

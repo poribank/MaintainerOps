@@ -1,0 +1,33 @@
+{
+  "name": "maintainerops",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Self-hosted maintainer operations assistant for open source GitHub organizations.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "engines": {
+    "node": ">=24.0.0",
+    "npm": ">=11.0.0"
+  },
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspace @maintainerops/core && npm run build --workspace @maintainerops/server && npm run build --workspace @maintainerops/web",
+    "dev": "npm run build --workspace @maintainerops/core && npm run dev --workspace @maintainerops/server",
+    "dev:web": "npm run dev --workspace @maintainerops/web",
+    "worker": "npm run worker --workspace @maintainerops/server",
+    "demo:replay": "node scripts/replay-webhook-fixtures.mjs",
+    "evidence:export": "node scripts/export-evidence.mjs",
+    "lint": "npm run lint --workspace @maintainerops/core && npm run build --workspace @maintainerops/core && npm run lint --workspace @maintainerops/server && npm run lint --workspace @maintainerops/web",
+    "test": "npm run test --workspace @maintainerops/core && npm run build --workspace @maintainerops/core && npm run test --workspace @maintainerops/server && npm run test --workspace @maintainerops/web",
+    "typecheck": "npm run typecheck --workspace @maintainerops/core && npm run build --workspace @maintainerops/core && npm run typecheck --workspace @maintainerops/server && npm run typecheck --workspace @maintainerops/web",
+    "check": "npm run typecheck && npm run lint && npm run test && npm run build"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "typescript": "^5.8.3",
+    "vitest": "^4.1.8"
+  }
+}

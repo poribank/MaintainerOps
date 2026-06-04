@@ -1,0 +1,56 @@
+# Evidence Export
+
+MaintainerOps includes a local evidence workflow for Codex for Open Source applications and maintainer pilot reviews.
+
+The generated evidence can show:
+
+- webhook ingest works;
+- PR, issue, release, and security work items are created;
+- pilot metrics are available;
+- AI raw-content transfer remains disabled unless policy allows it;
+- scanner jobs and audit logs are visible.
+
+## 1. Start the API
+
+```sh
+PORT=3001 GITHUB_WEBHOOK_SECRET=dev-secret npm run start --workspace @maintainerops/server
+```
+
+## 2. Replay Demo Webhooks
+
+Replay all bundled fixtures:
+
+```sh
+npm run demo:replay -- --url http://localhost:3001/webhooks/github --secret dev-secret
+```
+
+Replay one fixture:
+
+```sh
+npm run demo:replay -- \
+  --url http://localhost:3001/webhooks/github \
+  --secret dev-secret \
+  --fixture pull_request.opened.json \
+  --event pull_request
+```
+
+Fixtures live in `apps/server/fixtures/github`.
+
+## 3. Export Evidence
+
+```sh
+npm run evidence:export -- --url http://localhost:3001 --out evidence
+```
+
+This writes:
+
+- `evidence/maintainerops-evidence-<timestamp>.json`
+- `evidence/maintainerops-evidence-<timestamp>.md`
+
+Generated evidence files are gitignored by default. Review them before attaching to an application or issue.
+
+## 4. Real Pilot Guidance
+
+For a real Codex for Open Source application, prefer evidence from a repository you own, maintain, or are authorized to administer. Demo fixtures are useful for reproducibility, but they do not prove real ecosystem usage.
+
+Capture real pilot evidence after following `docs/GITHUB_APP_SETUP.md`.

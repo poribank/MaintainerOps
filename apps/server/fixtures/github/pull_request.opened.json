@@ -1,0 +1,35 @@
+{
+  "action": "opened",
+  "installation": {
+    "id": 123456
+  },
+  "repository": {
+    "id": 1001,
+    "name": "critical-runtime",
+    "full_name": "opensource/critical-runtime",
+    "private": false,
+    "default_branch": "main",
+    "owner": {
+      "login": "opensource"
+    }
+  },
+  "number": 1843,
+  "pull_request": {
+    "id": 2001,
+    "node_id": "PR_kwDOdemo1843",
+    "number": 1843,
+    "title": "Tighten release workflow token permissions",
+    "html_url": "https://github.com/opensource/critical-runtime/pull/1843",
+    "author_association": "FIRST_TIME_CONTRIBUTOR",
+    "labels": [
+      {
+        "name": "security"
+      }
+    ]
+  },
+  "sender": {
+    "id": 3001,
+    "login": "contributor-demo",
+    "type": "User"
+  }
+}

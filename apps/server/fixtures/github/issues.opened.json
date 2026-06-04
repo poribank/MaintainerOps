@@ -1,0 +1,31 @@
+{
+  "action": "opened",
+  "installation": {
+    "id": 123456
+  },
+  "repository": {
+    "id": 1001,
+    "name": "critical-runtime",
+    "full_name": "opensource/critical-runtime",
+    "private": false,
+    "default_branch": "main",
+    "owner": {
+      "login": "opensource"
+    }
+  },
+  "issue": {
+    "id": 4001,
+    "node_id": "I_kwDOdemo0944",
+    "number": 944,
+    "title": "Crash when auth token refresh fails",
+    "body": "The process throws an exception after token refresh. I do not have a minimal reproduction yet.",
+    "html_url": "https://github.com/opensource/critical-runtime/issues/944",
+    "author_association": "NONE",
+    "labels": []
+  },
+  "sender": {
+    "id": 3002,
+    "login": "user-reporter",
+    "type": "User"
+  }
+}

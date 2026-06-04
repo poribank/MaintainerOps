@@ -1,0 +1,259 @@
+import {
+  createAuditLogEntry,
+  evaluateSecurityPosture,
+  scoreWorkItem,
+  type AuditLogEntry,
+  type GitHubRepositoryRef,
+  type Recommendation,
+  type WorkItem,
+  type WorkItemKind,
+  type WorkItemStatus
+} from "@maintainerops/core";
+
+export interface QueueFilter {
+  kind?: WorkItemKind | undefined;
+  status?: WorkItemStatus | undefined;
+  repository?: string | undefined;
+}
+
+export interface ActionInput {
+  actor: string;
+  action: string;
+  dryRun?: boolean;
+  outcome?: AuditLogEntry["outcome"];
+  githubRequestId?: string | undefined;
+  metadata?: Record<string, unknown>;
+}
+
+export interface IngestResult {
+  accepted: boolean;
+  items: WorkItem[];
+}
+
+export type Awaitable<T> = T | Promise<T>;
+
+export interface MaintainerStore {
+  hasDelivery(deliveryId: string): Awaitable<boolean>;
+  ingest(deliveryId: string, items: WorkItem[], eventName?: string): Awaitable<IngestResult>;
+  listWorkItems(filter?: QueueFilter): Awaitable<WorkItem[]>;
+  listRepositories(): Awaitable<GitHubRepositoryRef[]>;
+  getWorkItem(id: string): Awaitable<WorkItem | undefined>;
+  recordAction(workItemId: string, input: ActionInput): Awaitable<AuditLogEntry>;
+  listAuditLog(): Awaitable<AuditLogEntry[]>;
+  seedDemoData?(now?: Date): Awaitable<void>;
+  close?(): Awaitable<void>;
+}
+
+export class InMemoryMaintainerStore implements MaintainerStore {
+  private readonly deliveries = new Set<string>();
+  private readonly workItems = new Map<string, WorkItem>();
+  private readonly repositories = new Map<string, GitHubRepositoryRef>();
+  private readonly auditLog: AuditLogEntry[] = [];
+
+  hasDelivery(deliveryId: string): boolean {
+    return this.deliveries.has(deliveryId);
+  }
+
+  ingest(deliveryId: string, items: WorkItem[]): IngestResult {
+    if (this.deliveries.has(deliveryId)) {
+      return { accepted: false, items: [] };
+    }
+
+    this.deliveries.add(deliveryId);
+    const storedItems: WorkItem[] = [];
+
+    for (const item of items) {
+      this.repositories.set(item.repository.fullName, item.repository);
+      const existing = this.workItems.get(item.id);
+
+      if (existing) {
+        existing.updatedAt = item.updatedAt;
+        existing.analysis = item.analysis;
+        existing.labels = item.labels;
+        existing.sourceDeliveryIds = Array.from(new Set([...existing.sourceDeliveryIds, ...item.sourceDeliveryIds]));
+        storedItems.push(existing);
+      } else {
+        this.workItems.set(item.id, item);
+        storedItems.push(item);
+      }
+    }
+
+    return { accepted: true, items: storedItems };
+  }
+
+  listWorkItems(filter: QueueFilter = {}): WorkItem[] {
+    return Array.from(this.workItems.values())
+      .filter((item) => (filter.kind ? item.kind === filter.kind : true))
+      .filter((item) => (filter.status ? item.status === filter.status : true))
+      .filter((item) => (filter.repository ? item.repository.fullName === filter.repository : true))
+      .sort((left, right) => {
+        const riskDelta = right.analysis.risk.value - left.analysis.risk.value;
+        if (riskDelta !== 0) return riskDelta;
+        return right.updatedAt.localeCompare(left.updatedAt);
+      });
+  }
+
+  listRepositories(): GitHubRepositoryRef[] {
+    return Array.from(this.repositories.values()).sort((left, right) => left.fullName.localeCompare(right.fullName));
+  }
+
+  getWorkItem(id: string): WorkItem | undefined {
+    return this.workItems.get(id);
+  }
+
+  recordAction(workItemId: string, input: ActionInput): AuditLogEntry {
+    const item = this.workItems.get(workItemId);
+    if (!item) {
+      throw new Error(`Work item '${workItemId}' was not found.`);
+    }
+
+    const entry = createAuditLogEntry({
+      actor: input.actor,
+      action: input.action,
+      repository: item.repository.fullName,
+      workItemId: item.id,
+      dryRun: input.dryRun ?? true,
+      outcome: input.outcome ?? (input.dryRun === false ? "approved" : "recorded"),
+      githubRequestId: input.githubRequestId,
+      metadata: input.metadata ?? {}
+    });
+    this.auditLog.unshift(entry);
+
+    if (input.action === "triage" || input.action === "resolve") {
+      item.status = input.action === "resolve" ? "resolved" : "triaged";
+      item.updatedAt = entry.occurredAt;
+    }
+
+    return entry;
+  }
+
+  listAuditLog(): AuditLogEntry[] {
+    return [...this.auditLog];
+  }
+
+  seedDemoData(now = new Date()): void {
+    const repository: GitHubRepositoryRef = {
+      id: 1,
+      owner: "opensource",
+      name: "critical-runtime",
+      fullName: "opensource/critical-runtime",
+      private: false,
+      defaultBranch: "main"
+    };
+
+    const security = evaluateSecurityPosture({
+      files: ["README.md", "package.json", ".github/CODEOWNERS"],
+      scorecardScore: 6.4,
+      codeownersErrors: 1,
+      branchProtectionEnabled: false,
+      rulesetsEnabled: false,
+      securityInsightsPresent: false,
+      dependabotAlerts: 2
+    });
+
+    const recommendations: Recommendation[] = [
+      {
+        id: "demo:label-security",
+        action: "add_label",
+        title: "Add security label",
+        description: "The report mentions token leakage and needs private maintainer review.",
+        confidence: 0.9,
+        labels: ["security"],
+        requiresApproval: true
+      }
+    ];
+
+    const items: WorkItem[] = [
+      {
+        id: "pull_request:opensource/critical-runtime:1842",
+        kind: "pull_request",
+        status: "open",
+        repository,
+        title: "Harden release workflow permissions",
+        url: "https://github.com/opensource/critical-runtime/pull/1842",
+        number: 1842,
+        externalId: "pull_request:opensource/critical-runtime:1842",
+        actor: { login: "first-time-contributor" },
+        createdAt: new Date(now.getTime() - 1000 * 60 * 60 * 8).toISOString(),
+        updatedAt: now.toISOString(),
+        labels: ["security"],
+        sourceDeliveryIds: ["demo-pr"],
+        analysis: {
+          summary: "Security-sensitive workflow files changed by a new contributor.",
+          risk: scoreWorkItem({
+            kind: "pull_request",
+            changedFiles: [".github/workflows/release.yml", "package-lock.json"],
+            newContributor: true,
+            missingTests: true,
+            releaseImpact: true
+          }),
+          findings: [
+            {
+              id: "demo:workflow-change",
+              title: "Release workflow changed",
+              severity: "high",
+              source: "triage",
+              description: "The PR changes files that can affect release credentials and provenance."
+            }
+          ],
+          recommendations: [
+            {
+              id: "demo:check-run",
+              action: "write_check",
+              title: "Publish MaintainerOps check",
+              description: "Use a check run to summarize release and security review requirements.",
+              confidence: 0.88,
+              requiresApproval: false
+            }
+          ]
+        }
+      },
+      {
+        id: "issue:opensource/critical-runtime:932",
+        kind: "issue",
+        status: "open",
+        repository,
+        title: "Crash when auth token is refreshed",
+        url: "https://github.com/opensource/critical-runtime/issues/932",
+        number: 932,
+        externalId: "issue:opensource/critical-runtime:932",
+        actor: { login: "user-reporter" },
+        createdAt: new Date(now.getTime() - 1000 * 60 * 60 * 36).toISOString(),
+        updatedAt: now.toISOString(),
+        labels: [],
+        sourceDeliveryIds: ["demo-issue"],
+        analysis: {
+          summary: "Issue likely needs bug and reproduction triage.",
+          risk: scoreWorkItem({ kind: "issue", securitySensitive: true, staleDays: 2 }),
+          findings: [],
+          recommendations
+        }
+      },
+      {
+        id: "policy:opensource/critical-runtime:security-posture",
+        kind: "policy",
+        status: "open",
+        repository,
+        title: "Security policy compliance needs attention",
+        externalId: "policy:opensource/critical-runtime:security-posture",
+        createdAt: now.toISOString(),
+        updatedAt: now.toISOString(),
+        labels: ["security"],
+        sourceDeliveryIds: ["demo-policy"],
+        analysis: {
+          summary: "Repository policy checks found missing security metadata and branch protection gaps.",
+          risk: scoreWorkItem({
+            kind: "policy",
+            scorecardScore: 6.4,
+            codeownersMissing: false,
+            securitySensitive: true
+          }),
+          findings: security.findings,
+          recommendations: security.recommendations
+        }
+      }
+    ];
+
+    this.ingest("demo-seed", items);
+  }
+}
