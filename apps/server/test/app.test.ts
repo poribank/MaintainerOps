@@ -69,6 +69,36 @@ describe("server", () => {
     expect(response.statusCode).toBe(401);
   });
 
+  it("rejects malformed JSON request bodies with a client error", async () => {
+    const { app, store } = await createTestApp();
+    const item = store.listWorkItems()[0];
+    expect(item).toBeDefined();
+
+    const response = await app.inject({
+      method: "POST",
+      url: `/api/work-items/${encodeURIComponent(item!.id)}/actions`,
+      headers: { "content-type": "application/json" },
+      payload: "{"
+    });
+
+    expect(response.statusCode).toBe(400);
+    expect(response.json<{ message: string }>().message).toContain("valid JSON");
+  });
+
+  it("rejects non-object JSON request bodies with a client error", async () => {
+    const { app } = await createTestApp();
+
+    const response = await app.inject({
+      method: "POST",
+      url: "/api/policies/validate",
+      headers: { "content-type": "application/json" },
+      payload: "[]"
+    });
+
+    expect(response.statusCode).toBe(400);
+    expect(response.json<{ message: string }>().message).toContain("JSON object");
+  });
+
   it("records approved actions in the audit log", async () => {
     const { app, store } = await createTestApp();
     const item = store.listWorkItems()[0];

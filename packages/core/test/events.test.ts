@@ -31,4 +31,141 @@ describe("normalizeGitHubWebhook", () => {
     expect(items[0]?.repository.installationId).toBe(99);
     expect(items[0]?.analysis.recommendations.flatMap((item) => item.labels ?? [])).toContain("bug");
   });
+
+  it("normalizes pull request events with stable review recommendations", () => {
+    const items = normalizeGitHubWebhook({
+      eventName: "pull_request",
+      deliveryId: "delivery-pr",
+      payload: {
+        repository: repositoryPayload(),
+        number: 7,
+        pull_request: {
+          number: 7,
+          title: "Update release workflow",
+          html_url: "https://github.com/org/repo/pull/7",
+          author_association: "FIRST_TIME_CONTRIBUTOR",
+          labels: [{ name: "security" }]
+        },
+        sender: { id: 10, login: "contributor", type: "User" }
+      }
+    });
+
+    expect(items).toHaveLength(1);
+    expect(items[0]).toMatchObject({
+      id: "pull_request:org/repo:7",
+      kind: "pull_request",
+      number: 7,
+      labels: ["security"]
+    });
+    expect(items[0]?.analysis.recommendations.map((item) => item.action)).toContain("write_check");
+  });
+
+  it("normalizes release events into release readiness work items", () => {
+    const items = normalizeGitHubWebhook({
+      eventName: "release",
+      deliveryId: "delivery-release",
+      payload: {
+        repository: repositoryPayload(),
+        release: {
+          tag_name: "v1.2.3",
+          name: "v1.2.3",
+          html_url: "https://github.com/org/repo/releases/tag/v1.2.3"
+        },
+        sender: { login: "maintainer" }
+      }
+    });
+
+    expect(items).toHaveLength(1);
+    expect(items[0]).toMatchObject({
+      id: "release:org/repo:v1.2.3",
+      kind: "release",
+      title: "v1.2.3"
+    });
+    expect(items[0]?.analysis.recommendations.map((item) => item.action)).toContain("review_required");
+  });
+
+  it("uses numeric security alert identifiers instead of delivery ids", () => {
+    const first = normalizeGitHubWebhook({
+      eventName: "secret_scanning_alert",
+      deliveryId: "delivery-security-1",
+      payload: {
+        repository: repositoryPayload(),
+        alert: {
+          number: 77,
+          title: "Secret scanning alert",
+          severity: "critical",
+          html_url: "https://github.com/org/repo/security/secret-scanning/77"
+        },
+        sender: { login: "github-security", type: "Bot" }
+      }
+    });
+    const redelivery = normalizeGitHubWebhook({
+      eventName: "secret_scanning_alert",
+      deliveryId: "delivery-security-2",
+      payload: {
+        repository: repositoryPayload(),
+        alert: {
+          number: 77,
+          title: "Secret scanning alert",
+          severity: "critical"
+        },
+        sender: { login: "github-security", type: "Bot" }
+      }
+    });
+
+    expect(first[0]?.id).toBe("security:org/repo:secret_scanning_alert:77");
+    expect(redelivery[0]?.id).toBe(first[0]?.id);
+    expect(first[0]?.analysis.findings[0]?.severity).toBe("critical");
+  });
+
+  it("reads nested security severity from code scanning alerts", () => {
+    const items = normalizeGitHubWebhook({
+      eventName: "code_scanning_alert",
+      deliveryId: "delivery-code-scanning",
+      payload: {
+        repository: repositoryPayload(),
+        alert: {
+          number: 12,
+          rule: {
+            description: "Hardcoded credential",
+            security_severity_level: "high"
+          }
+        },
+        sender: { login: "github-security", type: "Bot" }
+      }
+    });
+
+    expect(items[0]?.id).toBe("security:org/repo:code_scanning_alert:12");
+    expect(items[0]?.analysis.findings[0]?.severity).toBe("high");
+  });
+
+  it("preserves nested dependabot alert severity", () => {
+    const items = normalizeGitHubWebhook({
+      eventName: "dependabot_alert",
+      deliveryId: "delivery-dependabot",
+      payload: {
+        repository: repositoryPayload(),
+        alert: {
+          number: 13,
+          security_vulnerability: {
+            severity: "medium"
+          }
+        },
+        sender: { login: "github-security", type: "Bot" }
+      }
+    });
+
+    expect(items[0]?.id).toBe("security:org/repo:dependabot_alert:13");
+    expect(items[0]?.analysis.findings[0]?.severity).toBe("medium");
+  });
 });
+
+function repositoryPayload() {
+  return {
+    id: 1,
+    full_name: "org/repo",
+    name: "repo",
+    private: false,
+    owner: { login: "org" }
+  };
+}

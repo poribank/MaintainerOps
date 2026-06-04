@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import type { AuditLogEntry } from "./types.js";
 
 export interface CreateAuditLogInput {
@@ -15,7 +16,7 @@ export interface CreateAuditLogInput {
 
 export function createAuditLogEntry(input: CreateAuditLogInput): AuditLogEntry {
   const occurredAt = (input.now ?? new Date()).toISOString();
-  const id = `audit:${occurredAt}:${input.repository}:${input.action}`.replace(/\s+/g, "-");
+  const id = `audit:${occurredAt}:${input.repository}:${input.action}:${randomUUID()}`.replace(/\s+/g, "-");
 
   const entry: AuditLogEntry = {
     id,

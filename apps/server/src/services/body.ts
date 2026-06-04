@@ -1,12 +1,17 @@
 export function parseJsonBody(body: unknown): Record<string, unknown> {
   if (typeof body === "string") {
-    const parsed = JSON.parse(body) as unknown;
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(body) as unknown;
+    } catch {
+      throw new BadRequestBodyError("Request body must be valid JSON.");
+    }
     if (isRecord(parsed)) return parsed;
-    throw new Error("Expected JSON object body.");
+    throw new BadRequestBodyError("Request body must be a JSON object.");
   }
 
   if (isRecord(body)) return body;
-  throw new Error("Expected JSON object body.");
+  throw new BadRequestBodyError("Request body must be a JSON object.");
 }
 
 export function readRawBody(body: unknown): string {
@@ -16,4 +21,13 @@ export function readRawBody(body: unknown): string {
 
 export function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+class BadRequestBodyError extends Error {
+  statusCode = 400;
+
+  constructor(message: string) {
+    super(message);
+    this.name = "BadRequestBodyError";
+  }
 }

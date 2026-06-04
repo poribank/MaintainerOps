@@ -180,7 +180,8 @@ function createSecurityWorkItem(
 ): WorkItem {
   const alert = asRecord(input.payload.alert) ?? asRecord(input.payload.security_advisory) ?? input.payload;
   const title = readString(alert.title) ?? `${input.eventName.replaceAll("_", " ")} requires review`;
-  const severity = readString(alert.severity) ?? "high";
+  const severity = readSeverity(alert);
+  const alertId = readIdentifier(alert.number) ?? readIdentifier(alert.id) ?? input.deliveryId;
 
   return createWorkItem({
     kind: "security",
@@ -189,7 +190,7 @@ function createSecurityWorkItem(
     number: undefined,
     title,
     url: readString(alert.html_url),
-    externalId: `security:${repository.fullName}:${input.eventName}:${readString(alert.number) ?? readString(alert.id) ?? input.deliveryId}`,
+    externalId: `security:${repository.fullName}:${input.eventName}:${alertId}`,
     deliveryId: input.deliveryId,
     now,
     labels: ["security"],
@@ -200,7 +201,7 @@ function createSecurityWorkItem(
         {
           id: `security:${input.eventName}`,
           title,
-          severity: severity === "critical" ? "critical" : "high",
+          severity,
           source: "security",
           description: "GitHub reported a security alert for this repository."
         }
@@ -312,6 +313,34 @@ function readNumber(value: unknown): number | undefined {
   return typeof value === "number" && Number.isFinite(value) ? value : undefined;
 }
 
+function readIdentifier(value: unknown): string | undefined {
+  if (typeof value === "string" && value.length > 0) return value;
+  if (typeof value === "number" && Number.isFinite(value)) return String(value);
+  return undefined;
+}
+
+function readSeverity(alert: Record<string, unknown>): "low" | "medium" | "high" | "critical" {
+  const direct = normalizeSeverity(readString(alert.severity));
+  if (direct) return direct;
+
+  const rule = asRecord(alert.rule);
+  const ruleSeverity = normalizeSeverity(readString(rule?.security_severity_level) ?? readString(rule?.severity));
+  if (ruleSeverity) return ruleSeverity;
+
+  const vulnerability = asRecord(alert.security_vulnerability);
+  const vulnerabilitySeverity = normalizeSeverity(readString(vulnerability?.severity));
+  return vulnerabilitySeverity ?? "high";
+}
+
+function normalizeSeverity(value: string | undefined): "low" | "medium" | "high" | "critical" | undefined {
+  if (value === "low" || value === "medium" || value === "high" || value === "critical") {
+    return value;
+  }
+  return undefined;
+}
+
 function asRecord(value: unknown): Record<string, unknown> | undefined {
-  return typeof value === "object" && value !== null ? (value as Record<string, unknown>) : undefined;
+  return typeof value === "object" && value !== null && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : undefined;
 }
