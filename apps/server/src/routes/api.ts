@@ -73,6 +73,9 @@ export function registerApiRoutes(
     if (!action) {
       return reply.code(400).send({ error: "Action is required." });
     }
+    if (!isSupportedAction(action)) {
+      return reply.code(400).send({ error: `Unsupported action '${action}'.` });
+    }
 
     try {
       const item = await store.getWorkItem(params.id);
@@ -190,7 +193,19 @@ export function registerApiRoutes(
       }
 
       if (!rawContent) {
-        return reply.code(400).send({ error: "rawContent is required when includeRawContent=true." });
+        const reason = "rawContent is required when includeRawContent=true.";
+        await store.recordAction(item.id, {
+          actor,
+          action: "ai_assist",
+          dryRun: true,
+          outcome: "failed",
+          metadata: {
+            kind,
+            requestedRawContent: true,
+            reason
+          }
+        });
+        return reply.code(400).send({ error: reason });
       }
     }
 
@@ -324,6 +339,18 @@ function defaultAiKind(kind: WorkItemKind): AiAssistanceKind {
     case "policy":
       return "security_review";
   }
+}
+
+function isSupportedAction(action: string): boolean {
+  return [
+    "triage",
+    "resolve",
+    "write_check",
+    "add_label",
+    "write_issue_comment",
+    "write_pr_comment",
+    "create_release_draft"
+  ].includes(action);
 }
 
 function evaluateRawContentPolicy(

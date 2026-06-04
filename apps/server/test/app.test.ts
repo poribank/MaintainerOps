@@ -116,6 +116,22 @@ describe("server", () => {
     expect(audit.json<{ entries: Array<{ action: string }> }>().entries[0]?.action).toBe("triage");
   });
 
+  it("rejects unsupported work item actions", async () => {
+    const { app, store } = await createTestApp();
+    const item = store.listWorkItems()[0];
+    expect(item).toBeDefined();
+
+    const response = await app.inject({
+      method: "POST",
+      url: `/api/work-items/${encodeURIComponent(item!.id)}/actions`,
+      headers: { "content-type": "application/json" },
+      payload: JSON.stringify({ action: "merge_without_review", actor: "maintainer", dryRun: true })
+    });
+
+    expect(response.statusCode).toBe(400);
+    expect(response.json<{ error: string }>().error).toContain("Unsupported action");
+  });
+
   it("enqueues scanner jobs through the API", async () => {
     const { app } = await createTestApp();
 
@@ -184,23 +200,34 @@ describe("server", () => {
     });
   });
 
+  it("audit logs raw AI content requests that omit rawContent", async () => {
+    const { app, store } = await createAiTestApp();
+    const item = store.listWorkItems()[0];
+    expect(item).toBeDefined();
+
+    const response = await app.inject({
+      method: "POST",
+      url: `/api/work-items/${encodeURIComponent(item!.id)}/ai-assist`,
+      headers: { "content-type": "application/json" },
+      payload: JSON.stringify({
+        includeRawContent: true,
+        policySource:
+          "version: 1\nai:\n  enabled: true\n  provider: openai\ndataRetention:\n  rawContent: true\n  rawContentDays: 7\n"
+      })
+    });
+
+    expect(response.statusCode).toBe(400);
+    expect(response.json<{ error: string }>().error).toContain("rawContent is required");
+
+    const metrics = await app.inject({ method: "GET", url: "/api/pilot/metrics" });
+    expect(metrics.json<{ audit: { failed: number; aiRawContentTransfers: number } }>().audit).toMatchObject({
+      failed: 1,
+      aiRawContentTransfers: 0
+    });
+  });
+
   it("allows raw AI content only with explicit matching repository policy", async () => {
-    const config = loadConfig({
-      NODE_ENV: "test",
-      HOST: "127.0.0.1",
-      PORT: "0",
-      WEB_ORIGIN: "http://localhost:5173",
-      GITHUB_WEBHOOK_SECRET: "test-secret",
-      AI_PROVIDER: "openai",
-      OPENAI_API_KEY: "test-key",
-      OPENAI_MODEL: "test-model",
-      SEED_DEMO_DATA: "true"
-    });
-    const { app, store } = await createApp({
-      config,
-      store: new InMemoryMaintainerStore(),
-      aiAssistant: fakeAiAssistant()
-    });
+    const { app, store } = await createAiTestApp();
     const item = store.listWorkItems()[0];
     expect(item).toBeDefined();
 
@@ -242,6 +269,25 @@ async function createTestApp(seedDemoData = true) {
     SEED_DEMO_DATA: seedDemoData ? "true" : "false"
   });
   return createApp({ config, store: new InMemoryMaintainerStore() });
+}
+
+async function createAiTestApp() {
+  const config = loadConfig({
+    NODE_ENV: "test",
+    HOST: "127.0.0.1",
+    PORT: "0",
+    WEB_ORIGIN: "http://localhost:5173",
+    GITHUB_WEBHOOK_SECRET: "test-secret",
+    AI_PROVIDER: "openai",
+    OPENAI_API_KEY: "test-key",
+    OPENAI_MODEL: "test-model",
+    SEED_DEMO_DATA: "true"
+  });
+  return createApp({
+    config,
+    store: new InMemoryMaintainerStore(),
+    aiAssistant: fakeAiAssistant()
+  });
 }
 
 function fakeAiAssistant(): MaintainerAiAssistant {
