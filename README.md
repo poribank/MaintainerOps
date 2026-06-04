@@ -1,5 +1,7 @@
 # MaintainerOps
 
+[![CI](https://github.com/poribank/MaintainerOps/actions/workflows/ci.yml/badge.svg)](https://github.com/poribank/MaintainerOps/actions/workflows/ci.yml)
+
 MaintainerOps is a self-hosted GitHub App for open source maintainers who run many critical repositories. It centralizes pull request review support, issue triage, release readiness, and security policy compliance into one maintainer queue.
 
 The project is intentionally conservative: it recommends and reports by default. It does not auto-merge, auto-approve, or send private repository content to external AI providers unless a repository explicitly opts in.
@@ -30,6 +32,8 @@ Application materials:
 - React dashboard for repository health, work items, recommendations, and approved actions.
 
 ## Quick start
+
+Use Node.js 24 or newer. The repository includes `.nvmrc` for nvm users.
 
 ```sh
 npm install
@@ -93,8 +97,10 @@ automation:
   writePrComments: false
 ai:
   enabled: false
+  provider: disabled
 dataRetention:
   rawContent: false
+  rawContentDays: 0
 ```
 
 ## Security posture
@@ -111,7 +117,9 @@ OPENAI_API_KEY=...
 OPENAI_MODEL=chat-latest
 ```
 
-The current assistant uses normalized work item metadata by default. Raw content is not sent unless a caller explicitly requests it and the repository policy allows that workflow in a future integration.
+Use an API model that is available to the configured OpenAI account. `chat-latest` is the local default for experiments; pin and evaluate a production model before using AI assistance in a real maintainer workflow.
+
+The current assistant uses normalized work item metadata by default. Raw content is not sent unless a caller explicitly requests it and the repository policy allows that workflow.
 If `includeRawContent=true`, the API requires a repository policy source that enables AI and raw-content retention for the configured provider. Otherwise the request is rejected and audit logged.
 
 ```sh
@@ -160,7 +168,14 @@ curl http://localhost:3000/api/jobs
 
 ## Demo and evidence export
 
-Replay bundled GitHub webhook fixtures into a local API:
+Build and start the API on a dedicated demo port:
+
+```sh
+npm run build
+PORT=3001 GITHUB_WEBHOOK_SECRET=dev-secret npm run start --workspace @maintainerops/server
+```
+
+Replay bundled GitHub webhook fixtures into that local API:
 
 ```sh
 npm run demo:replay -- --url http://localhost:3001/webhooks/github --secret dev-secret

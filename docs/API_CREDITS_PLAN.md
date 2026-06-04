@@ -41,9 +41,11 @@ MaintainerOps will use API credits only for opt-in maintainer assistance. The ru
 The initial integration adds an `AiMaintainerAssistant` service behind configuration gates:
 
 - input: normalized `WorkItem`, sanitized findings, repository policy, optional redacted text;
-- output: summary, rationale, suggested maintainer action, confidence, and safety notes;
-- storage: generated analysis only, unless raw content retention is enabled;
-- observability: request count, token estimates, latency, failure rate, and redaction events.
+- output: summary, rationale, suggested maintainer actions, and safety notes;
+- storage: audit metadata only in the current endpoint; generated assistance is returned to the caller and raw content is not persisted;
+- observability: audit-log records for every AI assistance request, failed raw-content attempts, and pilot metrics for request counts and raw-content transfer counts.
+
+Planned pilot observability includes token estimates, latency, provider failure rate, and redaction-event counts.
 
 Current endpoint:
 
@@ -57,6 +59,8 @@ Current defaults:
 - `OPENAI_MODEL=chat-latest`
 - `includeRawContent=false`
 - no raw diff or issue body transfer in the dashboard flow
+
+Use an OpenAI Responses API model available to the configured account. `chat-latest` is a demo default; production pilots should pin a model after evaluating output quality, cost, and availability.
 
 Raw content requests are rejected unless the request includes a repository policy source that satisfies:
 

@@ -12,6 +12,14 @@ The generated evidence can show:
 
 ## 1. Start the API
 
+Build once from a fresh clone so `npm run start` can load compiled server files:
+
+```sh
+npm run build
+```
+
+Then start the API on a dedicated demo port:
+
 ```sh
 PORT=3001 GITHUB_WEBHOOK_SECRET=dev-secret npm run start --workspace @maintainerops/server
 ```

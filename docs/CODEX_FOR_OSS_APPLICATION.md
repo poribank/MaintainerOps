@@ -19,8 +19,8 @@ MaintainerOps is positioned as the workflow automation layer for the repository 
 
 Before submitting:
 
-- [ ] Push this repository to a public GitHub URL.
-- [ ] Replace `OWNER/REPOSITORY` placeholders in GitHub issue template contact links.
+- [x] Push this repository to a public GitHub URL.
+- [x] Replace GitHub issue template contact links with repository-specific URLs.
 - [ ] Add accurate repository metrics: stars, forks, downloads, package registry stats, dependent projects, or ecosystem usage.
 - [ ] Add evidence of active maintenance: recent releases, issue/PR activity, maintainer role, write access, or governance role.
 - [ ] Confirm the GitHub profile is public.
@@ -35,10 +35,10 @@ Before submitting:
 ### GitHub repository URL
 
 ```text
-[PUBLIC_GITHUB_REPOSITORY_URL]
+https://github.com/poribank/MaintainerOps
 ```
 
-Recommended: use the public repository you actively maintain. If MaintainerOps itself is the submitted repo, disclose that it is an early-stage maintainer automation project and include why it matters.
+Recommended: use the public repository you actively maintain. If MaintainerOps itself is the submitted repo, disclose that it is an early-stage maintainer automation project and do not claim production adoption before a real pilot.
 
 ### Role
 

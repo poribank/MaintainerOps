@@ -5,7 +5,7 @@ COPY package.json package-lock.json* ./
 COPY packages/core/package.json packages/core/package.json
 COPY apps/server/package.json apps/server/package.json
 COPY apps/web/package.json apps/web/package.json
-RUN npm install
+RUN npm ci
 
 COPY . .
 RUN npm run build

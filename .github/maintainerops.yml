@@ -1,0 +1,28 @@
+version: 1
+automation:
+  applyLabels: false
+  writePrComments: false
+  createReleaseDrafts: false
+ai:
+  enabled: false
+  provider: disabled
+dataRetention:
+  rawContent: false
+  rawContentDays: 0
+  analysisDays: 180
+  auditLogDays: 365
+labels:
+  allowed:
+    - bug
+    - enhancement
+    - documentation
+    - needs-reproduction
+    - security
+policy:
+  requireSecurityMd: true
+  requireCodeowners: true
+  requireScorecard: true
+  minimumScorecardScore: 7
+release:
+  requireProvenance: true
+  blockOnUnresolvedAdvisory: true
