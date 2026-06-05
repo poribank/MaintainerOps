@@ -63,6 +63,12 @@ PORT=3000 npm run start --workspace @maintainerops/server
 ```
 
 For local webhook testing, expose the API with a trusted tunnel and set the GitHub App webhook URL to the tunnel URL.
+For a stable no-account local pilot, a Smee channel is enough:
+
+```sh
+WEBHOOK_PROXY_URL=https://smee.io/<channel>
+npx --yes smee-client --url "$WEBHOOK_PROXY_URL" --target http://localhost:3000/webhooks/github
+```
 
 Keep these defaults for the first pilot:
 
@@ -78,12 +84,26 @@ QUEUE_DRIVER=memory
 Use PostgreSQL and Redis/BullMQ when you need restart-safe evidence:
 
 ```sh
+docker compose up -d postgres redis
+
 STORE_DRIVER=postgres \
 DATABASE_URL=postgres://maintainerops:maintainerops@localhost:5432/maintainerops \
 QUEUE_DRIVER=bullmq \
 REDIS_URL=redis://localhost:6379 \
+QUEUE_INLINE_WORKER=true \
+SEED_DEMO_DATA=false \
 npm run dev
 ```
+
+Run Scorecard with a GitHub App installation token or a least-privilege user token in `GITHUB_AUTH_TOKEN` so the scanner can read repository metadata without hitting anonymous API limits. OSV Scanner uses `SCANNER_WORKSPACE_ROOT` as its allowed root and rejects paths outside that directory.
+
+Validated pilot shape:
+
+- GitHub App installed on `poribank/MaintainerOps`.
+- Webhook proxy forwarding to the local API returned HTTP 202 from `POST /webhooks/github`.
+- PostgreSQL stored repository, work item, webhook delivery, and audit-log records.
+- BullMQ completed Scorecard and OSV Scanner jobs.
+- Evidence was exported with `npm run evidence:export`.
 
 ## 6. Enabling Writes
 

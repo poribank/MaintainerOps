@@ -24,6 +24,6 @@ Every write action is tied to an actor and audit log entry. Failed writes are al
 
 ## Scanner flow
 
-Scorecard uses `scorecard --repo=github.com/owner/name --format=json`. OSV Scanner uses `osv-scanner scan source --format json -r <path>`, limited to paths inside the MaintainerOps workspace.
+Scorecard uses `scorecard --repo=github.com/owner/name --format=json` and inherits `GITHUB_AUTH_TOKEN` from the server or worker environment when present. OSV Scanner uses `osv-scanner scan source --format json -r <path>`, limited to paths inside `SCANNER_WORKSPACE_ROOT`. The root defaults to the npm invocation directory so workspace commands still scan the repository root instead of only `apps/server`.
 
 For long-running scans, callers enqueue work through `POST /api/jobs/scans/scorecard` or `POST /api/jobs/scans/osv` and poll `GET /api/jobs/:id`. `QUEUE_DRIVER=memory` processes jobs in the API process. `QUEUE_DRIVER=bullmq` stores jobs in Redis and can process them inline or in the dedicated `npm run worker` process.

@@ -61,13 +61,21 @@ MaintainerOps defaults to a safe local mode:
 For a persistent pilot, create the PostgreSQL schema from `apps/server/db/schema.sql` and use:
 
 ```sh
-STORE_DRIVER=postgres DATABASE_URL=postgres://... npm run dev
+docker compose up -d postgres redis
+
+STORE_DRIVER=postgres \
+DATABASE_URL=postgres://maintainerops:maintainerops@localhost:5432/maintainerops \
+SEED_DEMO_DATA=false \
+npm run dev
 ```
 
 For Redis-backed jobs:
 
 ```sh
-QUEUE_DRIVER=bullmq REDIS_URL=redis://localhost:6379 npm run dev
+QUEUE_DRIVER=bullmq \
+REDIS_URL=redis://localhost:6379 \
+QUEUE_INLINE_WORKER=true \
+npm run dev
 ```
 
 To run a dedicated worker process instead of the API inline worker:
@@ -85,6 +93,13 @@ GitHub writes require all of the following:
 - an API action request with `dryRun:false`.
 
 Supported write actions are `write_check`, `add_label`, `write_issue_comment`, `write_pr_comment`, and `create_release_draft`.
+
+For a live local webhook pilot, point the GitHub App webhook URL at a stable proxy such as Smee and forward it to the local API:
+
+```sh
+WEBHOOK_PROXY_URL=https://smee.io/<channel>
+npx --yes smee-client --url "$WEBHOOK_PROXY_URL" --target http://localhost:3000/webhooks/github
+```
 
 ## Configuration
 
@@ -145,6 +160,8 @@ The dashboard does not send raw content.
 ## Scanner endpoints
 
 Scorecard and OSV Scanner are optional external binaries. The server returns `unavailable` when they are not on `PATH`.
+OSV Scanner paths are restricted to `SCANNER_WORKSPACE_ROOT`, which defaults to the npm invocation directory.
+Set `GITHUB_AUTH_TOKEN` in the server environment when running Scorecard against GitHub repositories to avoid unauthenticated API limits.
 
 ```sh
 curl -X POST http://localhost:3000/api/scans/scorecard \
