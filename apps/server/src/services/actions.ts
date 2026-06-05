@@ -78,7 +78,7 @@ export class ActionExecutor {
     switch (input.action) {
       case "write_check":
         return this.github!.writeCheckRun(workItem, {
-          headSha: requireString(input.metadata, "headSha")
+          headSha: requireGitCommitSha(input.metadata, "headSha")
         });
       case "add_label":
         return this.github!.addLabels(workItem, {
@@ -109,6 +109,14 @@ function requireString(metadata: Record<string, unknown>, key: string): string {
   const value = metadata[key];
   if (typeof value !== "string" || value.trim().length === 0) {
     throw new Error(`Action metadata '${key}' is required.`);
+  }
+  return value;
+}
+
+function requireGitCommitSha(metadata: Record<string, unknown>, key: string): string {
+  const value = requireString(metadata, key).trim();
+  if (!/^(?:[0-9a-f]{40}|[0-9a-f]{64})$/i.test(value)) {
+    throw new Error(`Action metadata '${key}' must be a git commit SHA.`);
   }
   return value;
 }
