@@ -12,9 +12,30 @@ describe("server", () => {
     const health = await app.inject({ method: "GET", url: "/healthz" });
     expect(health.statusCode).toBe(200);
 
+    const ready = await app.inject({ method: "GET", url: "/readyz" });
+    expect(ready.statusCode).toBe(200);
+    expect(ready.json<{ ok: boolean }>().ok).toBe(true);
+
     const queue = await app.inject({ method: "GET", url: "/api/queue" });
     expect(queue.statusCode).toBe(200);
     expect(queue.json<{ total: number }>().total).toBeGreaterThan(0);
+  });
+
+  it("reports readiness failures with a service-unavailable response", async () => {
+    const { app } = await createTestApp(true, new UnreadyStore());
+
+    const response = await app.inject({ method: "GET", url: "/readyz" });
+
+    expect(response.statusCode).toBe(503);
+    expect(response.json<{ ok: boolean; checks: { store: { ok: boolean; error?: string } } }>()).toMatchObject({
+      ok: false,
+      checks: {
+        store: {
+          ok: false,
+          error: "store unavailable"
+        }
+      }
+    });
   });
 
   it("accepts signed GitHub webhooks once", async () => {
@@ -322,7 +343,7 @@ describe("server", () => {
   });
 });
 
-async function createTestApp(seedDemoData = true) {
+async function createTestApp(seedDemoData = true, store = new InMemoryMaintainerStore()) {
   const config = loadConfig({
     NODE_ENV: "test",
     HOST: "127.0.0.1",
@@ -331,7 +352,7 @@ async function createTestApp(seedDemoData = true) {
     GITHUB_WEBHOOK_SECRET: "test-secret",
     SEED_DEMO_DATA: seedDemoData ? "true" : "false"
   });
-  return createApp({ config, store: new InMemoryMaintainerStore() });
+  return createApp({ config, store });
 }
 
 async function createAiTestApp() {
@@ -393,4 +414,10 @@ function issuePayload() {
     },
     sender: { login: "reporter" }
   };
+}
+
+class UnreadyStore extends InMemoryMaintainerStore {
+  ready(): void {
+    throw new Error("store unavailable");
+  }
 }

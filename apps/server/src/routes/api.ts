@@ -25,7 +25,19 @@ export function registerApiRoutes(
   aiAssistant: MaintainerAiAssistant
 ): void {
   app.get("/healthz", async () => ({ ok: true }));
-  app.get("/readyz", async () => ({ ok: true, store: config.storage.driver, queue: config.queue.driver }));
+  app.get("/readyz", async (_request, reply) => {
+    const checks = {
+      store: await runReadinessCheck(() => store.ready?.()),
+      queue: await runReadinessCheck(() => jobs.ready?.())
+    };
+    const ok = checks.store.ok && checks.queue.ok;
+    return reply.code(ok ? 200 : 503).send({
+      ok,
+      store: config.storage.driver,
+      queue: config.queue.driver,
+      checks
+    });
+  });
 
   app.get("/api/github-app/permissions", async () => ({
     minimum: MINIMUM_GITHUB_APP_PERMISSIONS,
@@ -407,4 +419,24 @@ function parseJobListLimit(value: string | undefined): number {
   const parsed = Number.parseInt(value, 10);
   if (!Number.isFinite(parsed)) return 50;
   return Math.min(Math.max(parsed, 1), 100);
+}
+
+async function runReadinessCheck(check: () => Promise<void> | void | undefined): Promise<
+  | {
+      ok: true;
+    }
+  | {
+      ok: false;
+      error: string;
+    }
+> {
+  try {
+    await check();
+    return { ok: true };
+  } catch (error) {
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : "Readiness check failed."
+    };
+  }
 }
