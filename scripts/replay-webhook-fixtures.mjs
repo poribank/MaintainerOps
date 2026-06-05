@@ -9,12 +9,15 @@ const fixtureDir = path.join(root, "apps/server/fixtures/github");
 const args = parseArgs(process.argv.slice(2));
 const url = args.url ?? "http://localhost:3001/webhooks/github";
 const secret = args.secret ?? process.env.GITHUB_WEBHOOK_SECRET ?? "dev-secret";
-const selected = args.fixture ? [args.fixture] : await readManifestFixturePaths();
+const selected = args.fixture
+  ? [{ path: args.fixture, event: args.event ?? eventFromFixtureName(path.basename(args.fixture)) }]
+  : await readManifestFixtures();
 
-for (const fixturePath of selected) {
+for (const fixture of selected) {
+  const fixturePath = fixture.path;
   const fullPath = path.isAbsolute(fixturePath) ? fixturePath : path.join(fixtureDir, fixturePath);
   const body = await readFile(fullPath, "utf8");
-  const event = args.event ?? eventFromFixtureName(path.basename(fixturePath));
+  const event = args.event ?? fixture.event;
   const delivery = `${args.deliveryPrefix ?? "demo"}-${event}-${randomUUID()}`;
   const signature = `sha256=${createHmac("sha256", secret).update(body).digest("hex")}`;
 
@@ -48,12 +51,20 @@ for (const fixturePath of selected) {
   }
 }
 
-async function readManifestFixturePaths() {
+async function readManifestFixtures() {
   const manifest = parseJson(await readFile(path.join(fixtureDir, "manifest.json"), "utf8"));
   if (!manifest || !Array.isArray(manifest.fixtures)) {
     throw new Error("Invalid fixture manifest.");
   }
-  return manifest.fixtures.map((fixture) => fixture.path);
+  return manifest.fixtures.map((fixture) => {
+    if (!fixture || typeof fixture.path !== "string" || typeof fixture.event !== "string") {
+      throw new Error("Invalid fixture manifest entry.");
+    }
+    return {
+      path: fixture.path,
+      event: fixture.event
+    };
+  });
 }
 
 function eventFromFixtureName(name) {
