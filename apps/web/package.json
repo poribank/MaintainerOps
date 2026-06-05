@@ -3,8 +3,13 @@
   "version": "0.2.3",
   "private": true,
   "type": "module",
+  "files": [
+    "dist",
+    "index.html",
+    "src"
+  ],
   "scripts": {
-    "build": "tsc -p tsconfig.json && vite build",
+    "build": "rm -rf dist && tsc -p tsconfig.json && vite build",
     "dev": "vite --host 0.0.0.0",
     "lint": "tsc -p tsconfig.json --noEmit",
     "preview": "vite preview --host 0.0.0.0",
