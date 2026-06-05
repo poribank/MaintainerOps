@@ -1,6 +1,10 @@
 # MaintainerOps
 
 [![CI](https://github.com/poribank/MaintainerOps/actions/workflows/ci.yml/badge.svg)](https://github.com/poribank/MaintainerOps/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/poribank/MaintainerOps/actions/workflows/codeql.yml/badge.svg)](https://github.com/poribank/MaintainerOps/actions/workflows/codeql.yml)
+[![Package](https://github.com/poribank/MaintainerOps/actions/workflows/package.yml/badge.svg)](https://github.com/poribank/MaintainerOps/actions/workflows/package.yml)
+[![Release Preflight](https://github.com/poribank/MaintainerOps/actions/workflows/release-preflight.yml/badge.svg)](https://github.com/poribank/MaintainerOps/actions/workflows/release-preflight.yml)
+[![Scorecard](https://github.com/poribank/MaintainerOps/actions/workflows/scorecard.yml/badge.svg)](https://github.com/poribank/MaintainerOps/actions/workflows/scorecard.yml)
 
 MaintainerOps is a self-hosted GitHub App for open source maintainers who run many critical repositories. It centralizes pull request review support, issue triage, release readiness, and security policy compliance into one maintainer queue.
 
