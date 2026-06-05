@@ -33,18 +33,11 @@ Optional modules may require additional permissions:
 
 ## 3. Webhook Events
 
-Subscribe to:
+For the current MVP, subscribe only to events that the server ingests into the maintainer queue:
 
 - `issues`
-- `issue_comment`
 - `pull_request`
-- `pull_request_review`
-- `pull_request_review_comment`
-- `check_suite`
-- `workflow_run`
 - `release`
-- `installation`
-- `installation_repositories`
 
 Optional security events:
 
@@ -52,6 +45,10 @@ Optional security events:
 - `code_scanning_alert`
 - `secret_scanning_alert`
 - `repository_advisory`
+
+Leave other events disabled until the server has a corresponding normalizer. In particular, do not include
+`installation` or `installation_repositories` in a generated GitHub App manifest for the current MVP. MaintainerOps
+reads installation ids from the supported webhook payloads and does not consume installation lifecycle events.
 
 ## 4. Local Dry-Run
 
