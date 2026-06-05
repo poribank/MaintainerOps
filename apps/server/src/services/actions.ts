@@ -91,8 +91,8 @@ export class ActionExecutor {
         });
       case "create_release_draft":
         return this.github!.createReleaseDraft(workItem, {
-          tagName: requireString(input.metadata, "tagName"),
-          name: optionalString(input.metadata, "name"),
+          tagName: requireTrimmedString(input.metadata, "tagName"),
+          name: optionalTrimmedString(input.metadata, "name"),
           body: optionalString(input.metadata, "body")
         });
       default:
@@ -113,9 +113,20 @@ function requireString(metadata: Record<string, unknown>, key: string): string {
   return value;
 }
 
+function requireTrimmedString(metadata: Record<string, unknown>, key: string): string {
+  return requireString(metadata, key).trim();
+}
+
 function optionalString(metadata: Record<string, unknown>, key: string): string | undefined {
   const value = metadata[key];
   return typeof value === "string" && value.length > 0 ? value : undefined;
+}
+
+function optionalTrimmedString(metadata: Record<string, unknown>, key: string): string | undefined {
+  const value = metadata[key];
+  if (typeof value !== "string") return undefined;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : undefined;
 }
 
 function requireStringArray(metadata: Record<string, unknown>, key: string): string[] {
