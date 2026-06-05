@@ -43,12 +43,14 @@ const rawPolicySchema = z
         writePrComments: z.boolean().optional(),
         createReleaseDrafts: z.boolean().optional()
       })
+      .strict()
       .optional(),
     ai: z
       .object({
         enabled: z.boolean().optional(),
         provider: z.enum(["disabled", "openai", "anthropic", "local"]).optional()
       })
+      .strict()
       .optional(),
     dataRetention: z
       .object({
@@ -57,11 +59,13 @@ const rawPolicySchema = z
         analysisDays: z.number().int().min(1).max(3650).optional(),
         auditLogDays: z.number().int().min(30).max(3650).optional()
       })
+      .strict()
       .optional(),
     labels: z
       .object({
         allowed: z.array(z.string().min(1)).optional()
       })
+      .strict()
       .optional(),
     policy: z
       .object({
@@ -70,12 +74,14 @@ const rawPolicySchema = z
         requireScorecard: z.boolean().optional(),
         minimumScorecardScore: z.number().min(0).max(10).optional()
       })
+      .strict()
       .optional(),
     release: z
       .object({
         requireProvenance: z.boolean().optional(),
         blockOnUnresolvedAdvisory: z.boolean().optional()
       })
+      .strict()
       .optional()
   })
   .strict();
@@ -104,7 +110,7 @@ export function mergePolicy(raw: RawPolicy): MaintainerOpsPolicy {
       auditLogDays: raw.dataRetention?.auditLogDays ?? DEFAULT_POLICY.dataRetention.auditLogDays
     },
     labels: {
-      allowed: raw.labels?.allowed ?? DEFAULT_POLICY.labels.allowed
+      allowed: [...(raw.labels?.allowed ?? DEFAULT_POLICY.labels.allowed)]
     },
     policy: {
       requireSecurityMd: raw.policy?.requireSecurityMd ?? DEFAULT_POLICY.policy.requireSecurityMd,
