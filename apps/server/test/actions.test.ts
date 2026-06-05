@@ -16,6 +16,18 @@ describe("ActionExecutor", () => {
     expect(result.metadata.mode).toBe("dry-run");
   });
 
+  it("applies local queue actions without GitHub writes", async () => {
+    const executor = new ActionExecutor();
+    const result = await executor.execute(workItem(), {
+      action: "triage",
+      dryRun: false,
+      metadata: {}
+    });
+
+    expect(result.outcome).toBe("applied");
+    expect(result.metadata.mode).toBe("local-queue");
+  });
+
   it("fails non-dry-run actions when GitHub writes are not configured", async () => {
     const executor = new ActionExecutor();
     const result = await executor.execute(workItem(), {

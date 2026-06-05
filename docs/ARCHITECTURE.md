@@ -18,7 +18,9 @@ MaintainerOps is split into three workspaces:
 
 ## Write model
 
-The API exposes write actions through `POST /api/work-items/:id/actions`. Requests are dry-run unless the caller sends `dryRun:false`, GitHub App credentials are configured, the work item has an installation id, and `GITHUB_WRITES_ENABLED=true`.
+The API exposes actions through `POST /api/work-items/:id/actions`. Local queue status actions (`triage` and `resolve`) update only MaintainerOps state, require `dryRun:false` to apply, and never call GitHub.
+
+GitHub write actions are dry-run unless the caller sends `dryRun:false`, GitHub App credentials are configured, the work item has an installation id, and `GITHUB_WRITES_ENABLED=true`.
 
 Every write action is tied to an actor and audit log entry. Failed writes are also audit logged with `outcome=failed`.
 

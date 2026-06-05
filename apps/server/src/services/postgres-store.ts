@@ -112,18 +112,20 @@ export class PostgresMaintainerStore implements MaintainerStore {
       throw new Error(`Work item '${workItemId}' was not found.`);
     }
 
+    const dryRun = input.dryRun ?? true;
+    const outcome = input.outcome ?? (dryRun ? "recorded" : "approved");
     const entry = createAuditLogEntry({
       actor: input.actor,
       action: input.action,
       repository: item.repository.fullName,
       workItemId: item.id,
-      dryRun: input.dryRun ?? true,
-      outcome: input.outcome ?? (input.dryRun === false ? "approved" : "recorded"),
+      dryRun,
+      outcome,
       githubRequestId: input.githubRequestId,
       metadata: input.metadata ?? {}
     });
 
-    if (input.action === "triage" || input.action === "resolve") {
+    if (shouldApplyQueueStatusAction(input.action, dryRun, outcome)) {
       item.status = input.action === "resolve" ? "resolved" : "triaged";
       item.updatedAt = entry.occurredAt;
     }
@@ -194,6 +196,10 @@ export class PostgresMaintainerStore implements MaintainerStore {
   async close(): Promise<void> {
     await this.pool.end();
   }
+}
+
+function shouldApplyQueueStatusAction(action: string, dryRun: boolean, outcome: AuditLogEntry["outcome"]): boolean {
+  return (action === "triage" || action === "resolve") && !dryRun && outcome !== "failed" && outcome !== "rejected";
 }
 
 async function upsertRepository(client: PoolClient, repository: GitHubRepositoryRef): Promise<void> {

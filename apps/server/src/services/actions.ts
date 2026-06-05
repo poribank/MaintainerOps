@@ -18,6 +18,18 @@ export class ActionExecutor {
   constructor(private readonly github?: GitHubWriteClient) {}
 
   async execute(workItem: WorkItem, input: ExecuteActionInput): Promise<ActionExecutionResult> {
+    if (isLocalQueueAction(input.action)) {
+      return {
+        outcome: input.dryRun ? "recorded" : "applied",
+        dryRun: input.dryRun,
+        metadata: {
+          mode: "local-queue",
+          action: input.action,
+          ...input.metadata
+        }
+      };
+    }
+
     if (input.dryRun) {
       return {
         outcome: "recorded",
@@ -87,6 +99,10 @@ export class ActionExecutor {
         throw new Error(`Unsupported write action '${input.action}'.`);
     }
   }
+}
+
+function isLocalQueueAction(action: string): boolean {
+  return action === "triage" || action === "resolve";
 }
 
 function requireString(metadata: Record<string, unknown>, key: string): string {

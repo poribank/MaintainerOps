@@ -94,6 +94,8 @@ GitHub writes require all of the following:
 
 Supported write actions are `write_check`, `add_label`, `write_issue_comment`, `write_pr_comment`, and `create_release_draft`.
 
+Local queue status actions are separate from GitHub writes. `triage` and `resolve` update only MaintainerOps state, require `dryRun:false` to apply, and are always audit logged.
+
 For a live local webhook pilot, point the GitHub App webhook URL at a stable proxy such as Smee and forward it to the local API:
 
 ```sh

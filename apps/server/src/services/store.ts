@@ -105,19 +105,21 @@ export class InMemoryMaintainerStore implements MaintainerStore {
       throw new Error(`Work item '${workItemId}' was not found.`);
     }
 
+    const dryRun = input.dryRun ?? true;
+    const outcome = input.outcome ?? (dryRun ? "recorded" : "approved");
     const entry = createAuditLogEntry({
       actor: input.actor,
       action: input.action,
       repository: item.repository.fullName,
       workItemId: item.id,
-      dryRun: input.dryRun ?? true,
-      outcome: input.outcome ?? (input.dryRun === false ? "approved" : "recorded"),
+      dryRun,
+      outcome,
       githubRequestId: input.githubRequestId,
       metadata: input.metadata ?? {}
     });
     this.auditLog.unshift(entry);
 
-    if (input.action === "triage" || input.action === "resolve") {
+    if (shouldApplyQueueStatusAction(input.action, dryRun, outcome)) {
       item.status = input.action === "resolve" ? "resolved" : "triaged";
       item.updatedAt = entry.occurredAt;
     }
@@ -254,6 +256,10 @@ export class InMemoryMaintainerStore implements MaintainerStore {
 
     this.ingest("demo-seed", items);
   }
+}
+
+function shouldApplyQueueStatusAction(action: string, dryRun: boolean, outcome: AuditLogEntry["outcome"]): boolean {
+  return (action === "triage" || action === "resolve") && !dryRun && outcome !== "failed" && outcome !== "rejected";
 }
 
 export function mergeIngestedWorkItem(existing: WorkItem, incoming: WorkItem): WorkItem {

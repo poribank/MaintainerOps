@@ -8,7 +8,7 @@ describe("MaintainerStore ingest status merging", () => {
     const openItem = workItem("open", "delivery-1");
 
     store.ingest("delivery-1", [openItem]);
-    store.recordAction(openItem.id, { actor: "maintainer", action: "triage" });
+    store.recordAction(openItem.id, { actor: "maintainer", action: "triage", dryRun: false, outcome: "applied" });
 
     store.ingest("delivery-2", [workItem("open", "delivery-2")]);
     expect(store.getWorkItem(openItem.id)?.status).toBe("triaged");
@@ -24,6 +24,18 @@ describe("MaintainerStore ingest status merging", () => {
       "delivery-3",
       "delivery-4"
     ]);
+  });
+
+  it("does not apply failed or dry-run status actions", () => {
+    const store = new InMemoryMaintainerStore();
+    const openItem = workItem("open", "delivery-1");
+
+    store.ingest("delivery-1", [openItem]);
+    store.recordAction(openItem.id, { actor: "maintainer", action: "triage", dryRun: true, outcome: "recorded" });
+    expect(store.getWorkItem(openItem.id)?.status).toBe("open");
+
+    store.recordAction(openItem.id, { actor: "maintainer", action: "resolve", dryRun: false, outcome: "failed" });
+    expect(store.getWorkItem(openItem.id)?.status).toBe("open");
   });
 });
 

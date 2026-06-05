@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildStats, scanSummary, type WorkItem } from "./App.js";
+import { actionRequestDryRun, buildStats, scanSummary, type WorkItem } from "./App.js";
 
 describe("dashboard helpers", () => {
   it("builds queue stats from work item risk and status", () => {
@@ -23,6 +23,12 @@ describe("dashboard helpers", () => {
     expect(scanSummary({ results: [{ id: "GHSA-1" }, { id: "GHSA-2" }] })).toBe("2 result groups");
     expect(scanSummary({ results: [] })).toBe("0 result groups");
     expect(scanSummary({ unexpected: true })).toBe("Scanner completed with JSON output");
+  });
+
+  it("uses non-dry-run requests only for local queue status actions", () => {
+    expect(actionRequestDryRun("triage")).toBe(false);
+    expect(actionRequestDryRun("resolve")).toBe(false);
+    expect(actionRequestDryRun("write_check")).toBe(true);
   });
 });
 

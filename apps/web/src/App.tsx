@@ -200,7 +200,7 @@ export function App() {
     const response = await fetch(`${API_BASE}/api/work-items/${encodeURIComponent(selected.id)}/actions`, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ action, actor: "local-admin", dryRun: true })
+      body: JSON.stringify({ action, actor: "local-admin", dryRun: actionRequestDryRun(action) })
     });
 
     if (!response.ok) {
@@ -572,6 +572,10 @@ function KindIcon(props: { kind: WorkItemKind }) {
     case "policy":
       return <ShieldCheck size={18} />;
   }
+}
+
+export function actionRequestDryRun(action: string): boolean {
+  return action !== "triage" && action !== "resolve";
 }
 
 export function buildStats(items: WorkItem[]) {

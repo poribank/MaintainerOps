@@ -32,6 +32,7 @@
 - Report-only policy compliance by default.
 - Data minimization defaults.
 - Explicit approval for GitHub write actions.
+- Explicit non-dry-run requests for local queue status changes.
 - Structured audit logs for every write.
 - `GITHUB_WRITES_ENABLED=false` by default.
 - OSV Scanner paths are constrained to the MaintainerOps workspace.

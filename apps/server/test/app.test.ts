@@ -108,12 +108,28 @@ describe("server", () => {
       method: "POST",
       url: `/api/work-items/${encodeURIComponent(item!.id)}/actions`,
       headers: { "content-type": "application/json" },
-      payload: JSON.stringify({ action: "triage", actor: "maintainer", dryRun: true })
+      payload: JSON.stringify({ action: "triage", actor: "maintainer", dryRun: false })
     });
     expect(action.statusCode).toBe(202);
+    expect(store.getWorkItem(item!.id)?.status).toBe("triaged");
 
     const audit = await app.inject({ method: "GET", url: "/api/audit-log" });
     expect(audit.json<{ entries: Array<{ action: string }> }>().entries[0]?.action).toBe("triage");
+  });
+
+  it("does not change queue status for dry-run local actions", async () => {
+    const { app, store } = await createTestApp();
+    const item = store.listWorkItems()[0];
+    expect(item).toBeDefined();
+
+    const action = await app.inject({
+      method: "POST",
+      url: `/api/work-items/${encodeURIComponent(item!.id)}/actions`,
+      headers: { "content-type": "application/json" },
+      payload: JSON.stringify({ action: "resolve", actor: "maintainer", dryRun: true })
+    });
+    expect(action.statusCode).toBe(202);
+    expect(store.getWorkItem(item!.id)?.status).toBe(item!.status);
   });
 
   it("rejects unsupported work item actions", async () => {
