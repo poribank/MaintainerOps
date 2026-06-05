@@ -53,6 +53,44 @@ describe("ActionExecutor", () => {
     expect(result.metadata.labels).toEqual(["bug"]);
   });
 
+  it("limits comment actions to matching work item kinds", async () => {
+    const executor = new ActionExecutor(fakeGitHub());
+
+    const issueComment = await executor.execute(workItem(), {
+      action: "write_issue_comment",
+      dryRun: false,
+      metadata: { body: "Issue triage note." }
+    });
+    const prComment = await executor.execute(workItem({ kind: "pull_request" }), {
+      action: "write_pr_comment",
+      dryRun: false,
+      metadata: { body: "PR review note." }
+    });
+    const issueAsPr = await executor.execute(workItem(), {
+      action: "write_pr_comment",
+      dryRun: false,
+      metadata: { body: "Wrong target." }
+    });
+    const prAsIssue = await executor.execute(workItem({ kind: "pull_request" }), {
+      action: "write_issue_comment",
+      dryRun: false,
+      metadata: { body: "Wrong target." }
+    });
+
+    expect(issueComment).toMatchObject({ outcome: "applied", metadata: { commentId: 1 } });
+    expect(prComment).toMatchObject({ outcome: "applied", metadata: { commentId: 1 } });
+    expect(issueAsPr).toMatchObject({
+      outcome: "failed",
+      metadata: { action: "write_pr_comment" }
+    });
+    expect(String(issueAsPr.metadata.reason)).toContain("requires a pull_request work item");
+    expect(prAsIssue).toMatchObject({
+      outcome: "failed",
+      metadata: { action: "write_issue_comment" }
+    });
+    expect(String(prAsIssue.metadata.reason)).toContain("requires a issue work item");
+  });
+
   it("fails GitHub write actions with invalid metadata before calling GitHub", async () => {
     const executor = new ActionExecutor(fakeGitHub());
 
@@ -106,10 +144,10 @@ function fakeGitHub(): GitHubWriteClient {
   };
 }
 
-function workItem(): WorkItem {
+function workItem(overrides: Partial<Pick<WorkItem, "kind">> = {}): WorkItem {
   return {
     id: "issue:org/repo:1",
-    kind: "issue",
+    kind: overrides.kind ?? "issue",
     status: "open",
     repository: {
       owner: "org",

@@ -85,7 +85,12 @@ export class ActionExecutor {
           labels: requireStringArray(input.metadata, "labels")
         });
       case "write_pr_comment":
+        requireWorkItemKind(workItem, input.action, "pull_request");
+        return this.github!.writeIssueComment(workItem, {
+          body: requireString(input.metadata, "body")
+        });
       case "write_issue_comment":
+        requireWorkItemKind(workItem, input.action, "issue");
         return this.github!.writeIssueComment(workItem, {
           body: requireString(input.metadata, "body")
         });
@@ -103,6 +108,12 @@ export class ActionExecutor {
 
 function isLocalQueueAction(action: string): boolean {
   return action === "triage" || action === "resolve";
+}
+
+function requireWorkItemKind(workItem: WorkItem, action: string, kind: WorkItem["kind"]): void {
+  if (workItem.kind !== kind) {
+    throw new Error(`Action '${action}' requires a ${kind} work item.`);
+  }
 }
 
 function requireString(metadata: Record<string, unknown>, key: string): string {
