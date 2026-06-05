@@ -68,7 +68,10 @@ export function parseCodeowners(source: string): CodeownersParseResult {
 }
 
 export function findUnownedFiles(files: string[], entries: CodeownersEntry[]): string[] {
-  return files.filter((file) => !entries.some((entry) => matchesCodeownersPattern(entry.pattern, file)));
+  return files.filter(
+    (file) =>
+      !entries.some((entry) => hasValidOwner(entry) && matchesCodeownersPattern(entry.pattern, file))
+  );
 }
 
 export function matchesCodeownersPattern(pattern: string, path: string): boolean {
@@ -93,4 +96,8 @@ export function matchesCodeownersPattern(pattern: string, path: string): boolean
 
 function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function hasValidOwner(entry: CodeownersEntry): boolean {
+  return entry.owners.some((owner) => OWNER_PATTERN.test(owner));
 }

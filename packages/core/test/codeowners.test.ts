@@ -25,4 +25,17 @@ src/** @maintainers/core
       "README.md"
     ]);
   });
+
+  it("does not count ownerless or invalid owner entries as coverage", () => {
+    const parsed = parseCodeowners(`
+docs/
+scripts/** not-an-owner
+README.md @maintainers/docs
+`);
+
+    expect(findUnownedFiles(["docs/guide.md", "scripts/release.sh", "README.md"], parsed.entries)).toEqual([
+      "docs/guide.md",
+      "scripts/release.sh"
+    ]);
+  });
 });
