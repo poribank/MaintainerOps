@@ -11,6 +11,7 @@
     "lint": "tsc -p tsconfig.json --noEmit",
     "start": "node dist/index.js",
     "test": "vitest run",
+    "test:postgres": "vitest run test/postgres-store.test.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "worker": "node dist/worker.js"
   },

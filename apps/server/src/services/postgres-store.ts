@@ -151,7 +151,9 @@ export class PostgresMaintainerStore implements MaintainerStore {
           entry.metadata
         ]
       );
-      await upsertWorkItem(client, item);
+      if (shouldApplyQueueStatusAction(input.action, dryRun, outcome)) {
+        await updateWorkItemPayload(client, item);
+      }
       await client.query("COMMIT");
       return entry;
     } catch (error) {
@@ -264,6 +266,17 @@ async function upsertWorkItem(client: PoolClient, item: WorkItem): Promise<void>
       itemToStore.createdAt,
       itemToStore.updatedAt
     ]
+  );
+}
+
+async function updateWorkItemPayload(client: PoolClient, item: WorkItem): Promise<void> {
+  await client.query(
+    `UPDATE work_items
+     SET status = $2,
+         payload = $3,
+         updated_at = $4
+     WHERE id = $1`,
+    [item.id, item.status, item, item.updatedAt]
   );
 }
 
