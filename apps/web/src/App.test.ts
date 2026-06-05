@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { actionRequestDryRun, buildStats, scanSummary, type WorkItem } from "./App.js";
+import { actionRequestDryRun, buildStats, readApiError, scanSummary, type WorkItem } from "./App.js";
 
 describe("dashboard helpers", () => {
   it("builds queue stats from work item risk and status", () => {
@@ -29,6 +29,18 @@ describe("dashboard helpers", () => {
     expect(actionRequestDryRun("triage")).toBe(false);
     expect(actionRequestDryRun("resolve")).toBe(false);
     expect(actionRequestDryRun("write_check")).toBe(true);
+  });
+
+  it("reads API error payloads with a status fallback", async () => {
+    await expect(
+      readApiError(new Response(JSON.stringify({ error: "Repository or workItemId is required." }), { status: 400 }), "Job enqueue failed")
+    ).resolves.toBe("Repository or workItemId is required.");
+
+    await expect(
+      readApiError(new Response(JSON.stringify({ message: "Body must be a JSON object." }), { status: 400 }), "Queue request failed")
+    ).resolves.toBe("Body must be a JSON object.");
+
+    await expect(readApiError(new Response("", { status: 500 }), "Action failed")).resolves.toBe("Action failed: 500");
   });
 });
 

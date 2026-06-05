@@ -166,7 +166,7 @@ export function App() {
 
     try {
       const response = await fetch(`${API_BASE}/api/queue`);
-      if (!response.ok) throw new Error(`Queue request failed: ${response.status}`);
+      if (!response.ok) throw new Error(await readApiError(response, "Queue request failed"));
       const data = (await response.json()) as QueueResponse;
       setItems(data.items);
       setSelectedId((current) => current || data.items[0]?.id || "");
@@ -204,7 +204,7 @@ export function App() {
     });
 
     if (!response.ok) {
-      setError(`Action failed: ${response.status}`);
+      setError(await readApiError(response, "Action failed"));
       return;
     }
 
@@ -242,8 +242,7 @@ export function App() {
     });
 
     if (!response.ok) {
-      const data = (await response.json()) as { error?: string };
-      setError(data.error ?? `Job enqueue failed: ${response.status}`);
+      setError(await readApiError(response, "Job enqueue failed"));
       return;
     }
 
@@ -263,7 +262,7 @@ export function App() {
 
     const data = (await response.json()) as { assistance?: AiAssistance; error?: string };
     if (!response.ok || !data.assistance) {
-      setError(data.error ?? `AI assistance failed: ${response.status}`);
+      setError(data.error ?? (await readApiError(response, "AI assistance failed")));
       return;
     }
 
@@ -600,4 +599,16 @@ export function scanSummary(json: unknown): string {
     return `${record.results.length} result groups`;
   }
   return "Scanner completed with JSON output";
+}
+
+export async function readApiError(response: Response, fallback: string): Promise<string> {
+  const statusMessage = `${fallback}: ${response.status}`;
+  try {
+    const body = (await response.json()) as { error?: unknown; message?: unknown };
+    if (typeof body.error === "string" && body.error.length > 0) return body.error;
+    if (typeof body.message === "string" && body.message.length > 0) return body.message;
+    return statusMessage;
+  } catch {
+    return statusMessage;
+  }
 }
