@@ -11,6 +11,8 @@ npm run check
 
 Keep changes small and include tests for policy logic, scoring, webhook handling, or API behavior.
 
+Participation is governed by the [Code of Conduct](CODE_OF_CONDUCT.md).
+
 Optional PostgreSQL store integration tests require a running database with `apps/server/db/schema.sql` applied:
 
 ```sh
