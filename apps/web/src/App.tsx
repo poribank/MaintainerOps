@@ -273,6 +273,11 @@ export function App() {
     void loadQueue();
   }, []);
 
+  useEffect(() => {
+    setAiAssistance(null);
+    setScanResult(null);
+  }, [selected?.id]);
+
   return (
     <main className="app-shell">
       <header className="topbar">
