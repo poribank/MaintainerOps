@@ -7,13 +7,20 @@ describe("dashboard helpers", () => {
       workItem({ id: "issue:org/repo:1", kind: "issue", status: "open", priority: "urgent" }),
       workItem({ id: "pr:org/repo:2", kind: "pull_request", status: "triaged", priority: "normal" }),
       workItem({ id: "security:org/repo:3", kind: "security", status: "open", priority: "high" }),
-      workItem({ id: "release:org/repo:v1", kind: "release", status: "resolved", priority: "low" })
+      workItem({ id: "release:org/repo:v1", kind: "release", status: "resolved", priority: "low" }),
+      workItem({
+        id: "issue:org/repo:4",
+        kind: "issue",
+        status: "triaged",
+        priority: "normal",
+        labels: ["Security"]
+      })
     ]);
 
     expect(stats).toEqual({
       open: 2,
       urgent: 1,
-      security: 1,
+      security: 2,
       repositories: 1
     });
   });
@@ -49,6 +56,7 @@ function workItem(input: {
   kind: WorkItem["kind"];
   status: WorkItem["status"];
   priority: WorkItem["analysis"]["risk"]["priority"];
+  labels?: string[];
 }): WorkItem {
   return {
     id: input.id,
@@ -60,7 +68,7 @@ function workItem(input: {
     },
     title: input.id,
     updatedAt: "2026-06-05T00:00:00.000Z",
-    labels: [],
+    labels: input.labels ?? [],
     analysis: {
       summary: "Needs review.",
       risk: {
