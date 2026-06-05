@@ -120,11 +120,11 @@ function optionalString(metadata: Record<string, unknown>, key: string): string 
 
 function requireStringArray(metadata: Record<string, unknown>, key: string): string[] {
   const value = metadata[key];
-  if (!Array.isArray(value) || value.some((entry) => typeof entry !== "string" || entry.length === 0)) {
+  if (!Array.isArray(value) || value.some((entry) => typeof entry !== "string" || entry.trim().length === 0)) {
     throw new Error(`Action metadata '${key}' must be a non-empty string array.`);
   }
   if (value.length === 0) {
     throw new Error(`Action metadata '${key}' must include at least one value.`);
   }
-  return value;
+  return value.map((entry) => entry.trim());
 }
