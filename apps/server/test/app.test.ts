@@ -166,6 +166,28 @@ describe("server", () => {
     expect(job.json<{ job: { type: string } }>().job.type).toBe("scan.scorecard");
   });
 
+  it("rejects invalid scanner job inputs before enqueueing", async () => {
+    const { app } = await createTestApp();
+
+    const scorecard = await app.inject({
+      method: "POST",
+      url: "/api/jobs/scans/scorecard",
+      headers: { "content-type": "application/json" },
+      payload: JSON.stringify({ repository: "bad repo" })
+    });
+    expect(scorecard.statusCode).toBe(400);
+    expect(scorecard.json<{ error: string }>().error).toContain("owner/name");
+
+    const osv = await app.inject({
+      method: "POST",
+      url: "/api/jobs/scans/osv",
+      headers: { "content-type": "application/json" },
+      payload: JSON.stringify({ path: "../" })
+    });
+    expect(osv.statusCode).toBe(400);
+    expect(osv.json<{ error: string }>().error).toContain("inside the MaintainerOps workspace");
+  });
+
   it("returns disabled AI assistance without external configuration", async () => {
     const { app, store } = await createTestApp();
     const item = store.listWorkItems()[0];

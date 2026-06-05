@@ -11,7 +11,7 @@ import { buildCheckRunPreview, MINIMUM_GITHUB_APP_PERMISSIONS } from "../service
 import { isRecord, parseJsonBody } from "../services/body.js";
 import type { ActionExecutor } from "../services/actions.js";
 import type { MaintainerStore } from "../services/store.js";
-import type { SecurityScannerRunner } from "../services/scanners.js";
+import { assertRepositoryFullName, resolveSafePath, type SecurityScannerRunner } from "../services/scanners.js";
 import type { JobQueue } from "../services/jobs.js";
 import type { AiAssistanceKind, MaintainerAiAssistant } from "../services/ai-assistant.js";
 
@@ -265,14 +265,24 @@ export function registerApiRoutes(
     if (!repository) {
       return reply.code(400).send({ error: "Repository or workItemId is required." });
     }
+    try {
+      assertRepositoryFullName(repository);
+    } catch (error) {
+      return reply.code(400).send({ error: error instanceof Error ? error.message : "Invalid repository." });
+    }
     const job = await jobs.enqueue("scan.scorecard", { repository });
     return reply.code(202).send({ job });
   });
 
   app.post("/api/jobs/scans/osv", async (request, reply) => {
     const body = parseJsonBody(request.body);
-    const path = readString(body.path) ?? ".";
-    const job = await jobs.enqueue("scan.osv", { path });
+    const targetPath = readString(body.path) ?? ".";
+    try {
+      resolveSafePath(config.scanners.workspaceRoot, targetPath);
+    } catch (error) {
+      return reply.code(400).send({ error: error instanceof Error ? error.message : "Invalid scan path." });
+    }
+    const job = await jobs.enqueue("scan.osv", { path: targetPath });
     return reply.code(202).send({ job });
   });
 

@@ -99,13 +99,13 @@ function parseOptionalJson(value: string): unknown | undefined {
   }
 }
 
-function assertRepositoryFullName(value: string): void {
+export function assertRepositoryFullName(value: string): void {
   if (!/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(value)) {
     throw new Error("Repository must be in owner/name format.");
   }
 }
 
-function resolveSafePath(workspaceRoot: string, targetPath: string): string {
+export function resolveSafePath(workspaceRoot: string, targetPath: string): string {
   const base = path.resolve(workspaceRoot);
   const resolved = path.resolve(base, targetPath || ".");
   if (resolved !== base && !resolved.startsWith(`${base}${path.sep}`)) {
