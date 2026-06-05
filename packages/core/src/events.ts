@@ -204,6 +204,7 @@ function createSecurityWorkItem(
     externalId: `security:${repository.fullName}:${input.eventName}:${alertId}`,
     deliveryId: input.deliveryId,
     now,
+    status: securityStatusFromAction(readString(input.payload.action)),
     labels: ["security"],
     analysis: {
       summary: "Security signal needs maintainer review.",
@@ -332,6 +333,20 @@ function statusFromGitHubState(state: string | undefined, action: string | undef
 
 function releaseStatusFromAction(action: string | undefined): WorkItemStatus {
   return action === "deleted" || action === "unpublished" ? "resolved" : "open";
+}
+
+function securityStatusFromAction(action: string | undefined): WorkItemStatus {
+  switch (action) {
+    case "closed":
+    case "closed_by_user":
+    case "dismissed":
+    case "fixed":
+    case "resolved":
+    case "withdrawn":
+      return "resolved";
+    default:
+      return "open";
+  }
 }
 
 function readActor(value: unknown): GitHubActorRef | undefined {

@@ -231,6 +231,74 @@ describe("normalizeGitHubWebhook", () => {
     expect(items[0]?.analysis.findings[0]?.severity).toBe("medium");
   });
 
+  it("marks resolved secret scanning alerts as resolved", () => {
+    const items = normalizeGitHubWebhook({
+      eventName: "secret_scanning_alert",
+      deliveryId: "delivery-secret-resolved",
+      payload: {
+        action: "resolved",
+        repository: repositoryPayload(),
+        alert: {
+          number: 77,
+          title: "Secret scanning alert"
+        },
+        sender: { login: "github-security", type: "Bot" }
+      }
+    });
+
+    expect(items[0]).toMatchObject({
+      id: "security:org/repo:secret_scanning_alert:77",
+      status: "resolved"
+    });
+  });
+
+  it("marks fixed dependabot alerts as resolved", () => {
+    const items = normalizeGitHubWebhook({
+      eventName: "dependabot_alert",
+      deliveryId: "delivery-dependabot-fixed",
+      payload: {
+        action: "fixed",
+        repository: repositoryPayload(),
+        alert: {
+          number: 13,
+          security_vulnerability: {
+            severity: "medium"
+          }
+        },
+        sender: { login: "github-security", type: "Bot" }
+      }
+    });
+
+    expect(items[0]).toMatchObject({
+      id: "security:org/repo:dependabot_alert:13",
+      status: "resolved"
+    });
+  });
+
+  it("keeps reopened code scanning alerts open", () => {
+    const items = normalizeGitHubWebhook({
+      eventName: "code_scanning_alert",
+      deliveryId: "delivery-code-reopened",
+      payload: {
+        action: "reopened",
+        repository: repositoryPayload(),
+        alert: {
+          number: 12,
+          rule: {
+            description: "Hardcoded credential",
+            security_severity_level: "high"
+          }
+        },
+        sender: { login: "github-security", type: "Bot" }
+      }
+    });
+
+    expect(items[0]).toMatchObject({
+      id: "security:org/repo:code_scanning_alert:12",
+      status: "open"
+    });
+  });
+
   it("reads repository advisory payload fields for stable security work items", () => {
     const items = normalizeGitHubWebhook({
       eventName: "repository_advisory",
