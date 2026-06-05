@@ -31,6 +31,34 @@ Optional modules may require additional permissions:
 - Security events read: repository advisory queue
 - Rulesets read: branch/ruleset policy checks
 
+After changing App permissions in GitHub, approve the updated installation permissions and verify the installed App from the command line:
+
+```sh
+npm run github:doctor -- \
+  --installation-id "$GITHUB_INSTALLATION_ID" \
+  --repository owner/name
+```
+
+For pilots that exercise release draft creation, require `Contents: read and write`:
+
+```sh
+npm run github:doctor -- \
+  --installation-id "$GITHUB_INSTALLATION_ID" \
+  --repository owner/name \
+  --require-release-drafts
+```
+
+For pilots that inspect or modify repository administration settings, require `Administration: read and write`:
+
+```sh
+npm run github:doctor -- \
+  --installation-id "$GITHUB_INSTALLATION_ID" \
+  --repository owner/name \
+  --require-administration
+```
+
+The doctor command only reads installation and repository metadata. It does not create releases, tags, comments, labels, checks, or other repository changes.
+
 ## 3. Webhook Events
 
 Subscribe to:
