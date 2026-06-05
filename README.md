@@ -210,3 +210,14 @@ npm run evidence:export -- --url http://localhost:3001 --out evidence
 ```
 
 Generated evidence files are ignored by git. See [docs/EVIDENCE_EXPORT.md](docs/EVIDENCE_EXPORT.md).
+
+## Release preflight
+
+Release tags and manual release preflight runs verify the same checks expected before a public pilot handoff:
+
+- `npm run check`
+- npm workspace tarball generation
+- CycloneDX SBOM generation with `npm sbom`
+- Docker image build
+
+The workflow uploads preflight artifacts for inspection. Publishing GitHub Releases, npm packages, or container images still requires an explicitly configured release credential and is not enabled by default.

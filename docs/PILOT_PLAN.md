@@ -8,7 +8,7 @@ This plan describes how to turn MaintainerOps from a local MVP into evidence for
 - Add accurate project metadata and screenshots.
 - Enable GitHub Actions CI.
 - Add `good first issue` tasks for policy checks, GitHub App setup, and AI assistant adapters.
-- Create a GitHub release tagged `v0.1.0`.
+- Create a GitHub release tag and run the release preflight workflow.
 
 ## Week 2: Maintainer Workflow Pilot
 
@@ -43,3 +43,7 @@ This plan describes how to turn MaintainerOps from a local MVP into evidence for
 - Number of PRs/issues triaged during the pilot.
 - Screenshots of queue, findings, recommendations, scanner jobs, and audit logs.
 - Examples where the tool helped find release or security blockers.
+
+## Release Preflight
+
+Before publishing a pilot milestone, run the `Release Preflight` workflow on the intended tag. It verifies the full check suite, npm workspace tarball creation, CycloneDX SBOM generation, and Docker image construction without publishing credentials.
