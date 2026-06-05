@@ -29,6 +29,8 @@ describe("SecurityScannerRunner", () => {
     const runner = new SecurityScannerRunner(loadConfig({ NODE_ENV: "test" }));
 
     await expect(runner.runScorecard("bad repo")).rejects.toThrow("owner/name");
+    await expect(runner.runScorecard("../repo")).rejects.toThrow("owner/name");
+    await expect(runner.runScorecard("owner/..")).rejects.toThrow("owner/name");
     await expect(runner.runOsvScanner("../")).rejects.toThrow("inside the MaintainerOps workspace");
   });
 

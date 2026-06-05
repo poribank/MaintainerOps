@@ -103,6 +103,10 @@ export function assertRepositoryFullName(value: string): void {
   if (!/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(value)) {
     throw new Error("Repository must be in owner/name format.");
   }
+  const [owner, repo] = value.split("/");
+  if (owner === "." || owner === ".." || repo === "." || repo === "..") {
+    throw new Error("Repository must be in owner/name format.");
+  }
 }
 
 export function resolveSafePath(workspaceRoot: string, targetPath: string): string {
