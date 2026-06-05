@@ -65,9 +65,10 @@ export class MemoryJobQueue implements JobQueue {
   }
 
   async list(limit = 50): Promise<MaintainerJob[]> {
+    const safeLimit = normalizeJobListLimit(limit);
     return Array.from(this.jobs.values())
       .sort((left, right) => right.createdAt.localeCompare(left.createdAt))
-      .slice(0, limit)
+      .slice(0, safeLimit)
       .map(cloneJob);
   }
 
@@ -133,7 +134,8 @@ export class BullMqJobQueue implements JobQueue {
   }
 
   async list(limit = 50): Promise<MaintainerJob[]> {
-    const jobs = await this.queue.getJobs(["waiting", "active", "completed", "failed", "delayed"], 0, limit - 1, true);
+    const safeLimit = normalizeJobListLimit(limit);
+    const jobs = await this.queue.getJobs(["waiting", "active", "completed", "failed", "delayed"], 0, safeLimit - 1, true);
     return Promise.all(jobs.map((job) => mapBullMqJob(job)));
   }
 
@@ -189,6 +191,11 @@ function cloneJob(job: MaintainerJob): MaintainerJob {
   if (job.result) cloned.result = { ...job.result };
   if (job.error) cloned.error = job.error;
   return cloned;
+}
+
+function normalizeJobListLimit(limit: number): number {
+  if (!Number.isFinite(limit)) return 50;
+  return Math.min(Math.max(Math.trunc(limit), 1), 100);
 }
 
 function parseRedisConnection(redisUrl: string) {

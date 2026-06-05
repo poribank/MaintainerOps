@@ -21,6 +21,25 @@ describe("MemoryJobQueue", () => {
     expect(completed.status).toBe("completed");
     expect(completed.result?.status).toBe("unavailable");
   });
+
+  it("normalizes list limits", async () => {
+    const queue = new MemoryJobQueue(
+      new SecurityScannerRunner(
+        loadConfig({
+          NODE_ENV: "test",
+          OSV_SCANNER_COMMAND: "maintainerops-osv-not-installed"
+        })
+      )
+    );
+
+    await queue.enqueue("scan.osv", { path: "." });
+    await queue.enqueue("scan.osv", { path: "." });
+
+    await expect(queue.list(1)).resolves.toHaveLength(1);
+    await expect(queue.list(0)).resolves.toHaveLength(1);
+    await expect(queue.list(Number.NaN)).resolves.toHaveLength(2);
+    await expect(queue.list(101)).resolves.toHaveLength(2);
+  });
 });
 
 async function waitForJob(queue: MemoryJobQueue, id: string) {

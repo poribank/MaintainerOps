@@ -245,8 +245,7 @@ export function registerApiRoutes(
 
   app.get("/api/jobs", async (request) => {
     const query = request.query as Record<string, string | undefined>;
-    const limit = Number.parseInt(query.limit ?? "50", 10);
-    const items = await jobs.list(Number.isFinite(limit) ? limit : 50);
+    const items = await jobs.list(parseJobListLimit(query.limit));
     return { total: items.length, items };
   });
 
@@ -401,4 +400,11 @@ function evaluateRawContentPolicy(
 
 function readString(value: unknown): string | undefined {
   return typeof value === "string" && value.length > 0 ? value : undefined;
+}
+
+function parseJobListLimit(value: string | undefined): number {
+  if (!value) return 50;
+  const parsed = Number.parseInt(value, 10);
+  if (!Number.isFinite(parsed)) return 50;
+  return Math.min(Math.max(parsed, 1), 100);
 }

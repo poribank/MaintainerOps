@@ -188,6 +188,31 @@ describe("server", () => {
     expect(osv.json<{ error: string }>().error).toContain("inside the MaintainerOps workspace");
   });
 
+  it("normalizes job list limits from query strings", async () => {
+    const { app } = await createTestApp();
+
+    await app.inject({
+      method: "POST",
+      url: "/api/jobs/scans/osv",
+      headers: { "content-type": "application/json" },
+      payload: JSON.stringify({ path: "." })
+    });
+    await app.inject({
+      method: "POST",
+      url: "/api/jobs/scans/osv",
+      headers: { "content-type": "application/json" },
+      payload: JSON.stringify({ path: "." })
+    });
+
+    const limited = await app.inject({ method: "GET", url: "/api/jobs?limit=1" });
+    expect(limited.statusCode).toBe(200);
+    expect(limited.json<{ items: unknown[] }>().items).toHaveLength(1);
+
+    const zero = await app.inject({ method: "GET", url: "/api/jobs?limit=0" });
+    expect(zero.statusCode).toBe(200);
+    expect(zero.json<{ items: unknown[] }>().items).toHaveLength(1);
+  });
+
   it("returns disabled AI assistance without external configuration", async () => {
     const { app, store } = await createTestApp();
     const item = store.listWorkItems()[0];
