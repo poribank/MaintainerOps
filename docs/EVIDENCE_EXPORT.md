@@ -12,6 +12,14 @@ The generated evidence can show:
 
 ## 1. Start the API
 
+For a one-command local smoke flow, run:
+
+```sh
+npm run demo:smoke
+```
+
+The smoke flow builds the workspaces, starts a temporary local API, replays the bundled fixtures, records a dry-run write action, requests metadata-only AI assistance, enqueues an OSV job, and exports evidence under `evidence/demo-smoke-<timestamp>/`.
+
 Build once from a fresh clone so `npm run start` can load compiled server files:
 
 ```sh
@@ -58,6 +66,12 @@ npm run demo:replay -- \
 ```
 
 Fixtures live in `apps/server/fixtures/github`.
+
+To run the same smoke checks against an API that is already running:
+
+```sh
+npm run demo:smoke -- --url http://localhost:3001 --secret dev-secret
+```
 
 ## 3. Export Evidence
 
