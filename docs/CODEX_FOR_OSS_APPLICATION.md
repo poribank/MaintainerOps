@@ -1,72 +1,88 @@
-# Codex for Open Source Application Kit
+# Codex for Open Source Application Notes
 
-This document prepares MaintainerOps for the Codex for Open Source application form.
+This document keeps MaintainerOps application material grounded in facts from the public repository. Do not add inferred adoption, usage, or security claims without evidence from the repository, package registries, or a real pilot.
 
-Use it as a submission draft, not as a source of fabricated metrics. Replace every bracketed placeholder with facts from the public repository you actually maintain.
+## Repository Snapshot
+
+Verified on 2026-06-05:
+
+- Repository: `https://github.com/poribank/MaintainerOps`
+- Visibility: public
+- Default branch: `main`
+- Stars: 0
+- Forks: 0
+- Open issues: 0
+- License intent: Apache-2.0 in `package.json` and `LICENSE`
+- Current stage: early public OSS pilot, not production adoption
+
+The repo already includes CI, CodeQL, package verification, release preflight, Scorecard workflow, security policy, governance notes, contribution guide, GitHub App setup docs, pilot plan, threat model, and evidence export docs.
 
 ## Program Fit
 
-The Codex for Open Source program is for core maintainers or maintainers of widely used public projects. It supports API credits, six months of ChatGPT Pro with Codex, and conditional Codex Security access for eligible repositories.
+MaintainerOps targets the maintainer workloads covered by Codex for Open Source:
 
-MaintainerOps is positioned as the workflow automation layer for the repository named in the application:
-
-- PR review support through risk scoring, check-run summaries, sensitive-file detection, and review recommendations.
+- PR review support through risk scoring, check-run previews, sensitive-file detection, and review recommendations.
 - Issue triage support through label suggestions, reproduction-detail detection, duplicate-review hooks, and maintainer queue prioritization.
 - Release workflow support through release blocker detection, provenance checks, changelog checks, and security gate reporting.
 - Security support through OpenSSF Scorecard, OSV Scanner, CODEOWNERS checks, GitHub ruleset checks, and audit logging.
 
-## Readiness Checklist
+The project is intentionally conservative. It does not auto-merge, auto-approve, or send raw repository content to AI providers by default.
 
-Before submitting:
+## Submission Checklist
 
-- [x] Push this repository to a public GitHub URL.
-- [x] Replace GitHub issue template contact links with repository-specific URLs.
-- [ ] Add accurate repository metrics: stars, forks, downloads, package registry stats, dependent projects, or ecosystem usage.
-- [ ] Add evidence of active maintenance: recent releases, issue/PR activity, maintainer role, write access, or governance role.
-- [ ] Confirm the GitHub profile is public.
-- [ ] Confirm the repository in the form is public.
-- [ ] Confirm the OpenAI organization ID from the API dashboard.
-- [ ] If requesting Codex Security, confirm you own, maintain, or are authorized to administer the repository.
-- [ ] Generate pilot evidence with `npm run evidence:export` after dry-run replay or real webhook traffic.
-- [ ] Do not claim production usage until a real GitHub App installation and pilot have run.
+Before submitting an application:
+
+- [x] Public GitHub repository exists at `https://github.com/poribank/MaintainerOps`.
+- [x] GitHub App setup guide exists.
+- [x] Evidence export workflow exists.
+- [x] Security policy and private vulnerability reporting guidance exist.
+- [x] Local checks pass with `npm run check`.
+- [x] Real GitHub App installation has been validated on `poribank/MaintainerOps`.
+- [x] Live webhook forwarding has returned HTTP 202 from `POST /webhooks/github`.
+- [ ] Confirm the GitHub UI recognizes the repository license after the next pushed metadata refresh.
+- [ ] Record current stars, forks, open issues, releases, and workflow status on the submission date.
+- [ ] Export fresh pilot evidence with `npm run evidence:export` after live webhook or fixture replay.
+- [ ] Add screenshots of the installed GitHub App, maintainer queue, scanner jobs, and audit log.
+- [ ] Confirm the OpenAI organization ID from the API dashboard. Do not commit it.
+- [ ] Confirm the submitting account owns, maintains, or is authorized to administer the repository.
 
 ## Form Field Drafts
 
-### GitHub repository URL
+### GitHub Repository URL
 
 ```text
 https://github.com/poribank/MaintainerOps
 ```
 
-Recommended: use the public repository you actively maintain. If MaintainerOps itself is the submitted repo, disclose that it is an early-stage maintainer automation project and do not claim production adoption before a real pilot.
-
 ### Role
 
-```text
-[주 책임자/핵심 기여자]
-```
-
-Suggested wording:
+Korean:
 
 ```text
-I am the [primary maintainer/core contributor] responsible for [PR review, issue triage, release coordination, security policy, CI, dependency maintenance] in [repository/project].
+MaintainerOps 프로젝트의 소유자이자 주 메인테이너입니다.
 ```
 
-### Why this repository fits the program
-
-Korean draft, under 500 characters:
+English:
 
 ```text
-[프로젝트명]은 [생태계/사용자군]에서 [핵심 역할]을 수행하는 공개 OSS입니다. 저는 [역할]로서 PR 검토, 이슈 분류, 릴리스 준비, 보안 정책 점검을 지속적으로 담당하고 있습니다. 현재 [stars/downloads/dependents/사용 사례]가 있으며, MaintainerOps를 통해 반복 유지관리 업무를 줄이고 보안·품질 신호를 일관되게 관리하려 합니다.
+I am the owner and primary maintainer of the MaintainerOps project.
 ```
 
-English draft, under 500 characters:
+### Why This Repository Fits
+
+Korean, under 500 characters:
 
 ```text
-[Project] is a public OSS project used by [ecosystem/users] for [core function]. As [role], I handle PR review, issue triage, release coordination, and security maintenance. The project has [stars/downloads/dependents/adoption evidence]. I plan to use MaintainerOps to reduce repetitive maintainer work and keep security and quality signals visible.
+MaintainerOps는 공개 OSS 메인테이너의 PR 검토, 이슈 분류, 릴리스 준비, 보안 정책 점검을 한 큐에서 관리하기 위한 GitHub App입니다. 현재 초기 공개 파일럿 단계이며, 자동 병합이나 자동 approve 없이 dry-run, audit log, 최소 권한, 명시적 승인 흐름을 기본값으로 둡니다.
 ```
 
-### Interested benefits
+English, under 500 characters:
+
+```text
+MaintainerOps is a public OSS GitHub App for maintainer workflows: PR review, issue triage, release readiness, and security policy checks in one queue. It is in early public pilot stage and is deliberately conservative: no auto-merge or auto-approval, with dry-run defaults, audit logs, least-privilege permissions, and explicit approval.
+```
+
+### Interested Benefits
 
 Recommended selections:
 
@@ -75,37 +91,37 @@ Codex Security
 API credits for the project
 ```
 
-Select Codex Security only if you have authority to administer the submitted repository.
+Select Codex Security only if the submitting account is authorized to administer the repository being evaluated.
 
-### How API credits will be used
+### How API Credits Will Be Used
 
-Korean draft, under 500 characters:
+Korean, under 500 characters:
 
 ```text
 API 크레딧은 MaintainerOps의 선택형 AI 보조 기능에 사용합니다. PR diff 요약, 위험 파일 설명, 테스트 누락 제안, 이슈 라벨 추천 근거, 릴리스 차단 요인 요약을 생성하되 기본은 dry-run과 human approval입니다. 비공개 코드나 원문 diff 외부 전송은 저장소 정책에서 명시적으로 opt-in한 경우에만 허용합니다.
 ```
 
-English draft, under 500 characters:
+English, under 500 characters:
 
 ```text
 API credits will power optional MaintainerOps AI assistance: PR diff summaries, sensitive-file explanations, missing-test suggestions, issue label rationale, and release blocker summaries. The default flow is dry-run plus human approval. Private code or raw diff transfer is disabled unless the repository explicitly opts in by policy.
 ```
 
-### Additional information
+### Additional Information
 
-Korean draft, under 500 characters:
-
-```text
-MaintainerOps는 자동 병합·자동 approve를 하지 않는 보수적 설계입니다. GitHub App 권한 최소화, webhook 서명 검증, delivery idempotency, audit log, raw content 비저장 기본값을 갖추었습니다. 목표는 메인테이너의 판단을 대체하는 것이 아니라 여러 저장소의 PR/이슈/릴리스/보안 신호를 한 큐에서 검토 가능하게 만드는 것입니다.
-```
-
-English draft, under 500 characters:
+Korean, under 500 characters:
 
 ```text
-MaintainerOps is deliberately conservative: no auto-merge or auto-approval. It uses least-privilege GitHub App permissions, webhook signature verification, delivery idempotency, audit logs, and metadata-only defaults. The goal is not to replace maintainers, but to make PR, issue, release, and security signals reviewable in one queue.
+MaintainerOps는 메인테이너의 판단을 대체하지 않는 보조 도구입니다. GitHub App 권한 최소화, webhook 서명 검증, delivery idempotency, audit log, raw content 비저장 기본값을 갖추고 있습니다. 목표는 여러 저장소의 PR/이슈/릴리스/보안 신호를 반복 가능하고 검토 가능한 운영 흐름으로 만드는 것입니다.
 ```
 
-## Current Project Evidence
+English, under 500 characters:
+
+```text
+MaintainerOps is a maintainer-assistance tool, not a replacement for maintainer judgment. It uses least-privilege GitHub App permissions, webhook signature verification, delivery idempotency, audit logs, and metadata-only defaults. The goal is to make PR, issue, release, and security signals repeatable and reviewable across repositories.
+```
+
+## Evidence Already Available
 
 Implemented and verified locally:
 
@@ -113,6 +129,7 @@ Implemented and verified locally:
 - GitHub webhook normalization for PR, issue, release, and security events.
 - Risk scoring, issue triage, release readiness, security posture, CODEOWNERS checks, and policy parsing.
 - GitHub write adapter with `GITHUB_WRITES_ENABLED=false` by default.
+- Local queue status actions separated from GitHub writes and audit logged.
 - Memory/PostgreSQL store adapters.
 - Memory/BullMQ job queues and worker process.
 - Scorecard and OSV Scanner runner endpoints.
@@ -120,10 +137,11 @@ Implemented and verified locally:
 - Repository-policy gate for raw-content AI transfer, with failed attempts audit logged.
 - Pilot metrics endpoint for work items, recommendations, audit logs, and scanner jobs.
 - Webhook fixture replay and evidence export scripts for reproducible demos.
-- Tests and build passing via `npm run check`.
+- CI, CodeQL, Package, Scorecard, and Release Preflight workflows.
 
-Current limitation:
+## Current Limitations
 
-- No public adoption metrics exist until the repository is published and piloted against real maintained projects.
-- Real GitHub writes require a GitHub App installation and maintainer approval.
-- Codex/OpenAI API usage is planned as an opt-in AI assistant layer; raw content transfer remains disabled by default.
+- No public adoption metrics exist yet; stars, forks, and open issues were all 0 on 2026-06-05.
+- No production usage should be claimed until maintainers complete a real pilot and attach evidence.
+- Real GitHub writes require a GitHub App installation, `GITHUB_WRITES_ENABLED=true`, and explicit maintainer approval.
+- Raw-content AI assistance remains opt-in by repository policy and should not be enabled for private or sensitive content without authorization.
