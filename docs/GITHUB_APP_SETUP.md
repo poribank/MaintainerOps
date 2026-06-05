@@ -33,7 +33,7 @@ Optional modules may require additional permissions:
 
 ## 3. Webhook Events
 
-Subscribe to:
+Subscribe to these selectable repository events:
 
 - `issues`
 - `issue_comment`
@@ -43,8 +43,6 @@ Subscribe to:
 - `check_suite`
 - `workflow_run`
 - `release`
-- `installation`
-- `installation_repositories`
 
 Optional security events:
 
@@ -52,6 +50,8 @@ Optional security events:
 - `code_scanning_alert`
 - `secret_scanning_alert`
 - `repository_advisory`
+
+GitHub sends installation lifecycle events separately. Do not include `installation` or `installation_repositories` in a GitHub App manifest `default_events` list; GitHub rejects them as unsupported default events.
 
 ## 4. Local Dry-Run
 
