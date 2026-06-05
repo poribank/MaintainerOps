@@ -95,18 +95,39 @@ export function calculateReleaseReadiness(
     ready: blockers.length === 0,
     blockers,
     warnings,
-    recommendations: [
-      {
-        id: blockers.length > 0 ? "release:block" : "release:ready",
-        action: blockers.length > 0 ? "block_release" : "no_action",
-        title: blockers.length > 0 ? "Hold release" : "Release gates passed",
-        description:
-          blockers.length > 0
-            ? "Resolve blocking findings before publishing this release."
-            : "No configured release blockers were found.",
-        confidence: 0.9,
-        requiresApproval: false
-      }
-    ]
+    recommendations: [buildReleaseRecommendation(blockers, warnings)]
+  };
+}
+
+function buildReleaseRecommendation(blockers: Finding[], warnings: Finding[]): Recommendation {
+  if (blockers.length > 0) {
+    return {
+      id: "release:block",
+      action: "block_release",
+      title: "Hold release",
+      description: "Resolve blocking findings before publishing this release.",
+      confidence: 0.9,
+      requiresApproval: false
+    };
+  }
+
+  if (warnings.length > 0) {
+    return {
+      id: "release:review-warnings",
+      action: "review_required",
+      title: "Review release warnings",
+      description: "No configured blockers were found, but release warnings need maintainer review.",
+      confidence: 0.82,
+      requiresApproval: false
+    };
+  }
+
+  return {
+    id: "release:ready",
+    action: "no_action",
+    title: "Release gates passed",
+    description: "No configured release blockers or warnings were found.",
+    confidence: 0.9,
+    requiresApproval: false
   };
 }

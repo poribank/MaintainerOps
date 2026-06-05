@@ -14,6 +14,21 @@ describe("release readiness", () => {
       expect.arrayContaining(["release:unresolved-advisory", "release:missing-provenance"])
     );
   });
+
+  it("keeps non-blocking warnings reviewable", () => {
+    const readiness = calculateReleaseReadiness({
+      tagName: "v1.2.3",
+      hasProvenance: true,
+      missingChangelog: true
+    });
+
+    expect(readiness.ready).toBe(true);
+    expect(readiness.warnings.map((finding) => finding.id)).toContain("release:missing-changelog");
+    expect(readiness.recommendations[0]).toMatchObject({
+      id: "release:review-warnings",
+      action: "review_required"
+    });
+  });
 });
 
 describe("security posture", () => {
