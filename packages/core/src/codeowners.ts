@@ -86,16 +86,29 @@ export function matchesCodeownersPattern(pattern: string, path: string): boolean
     return normalizedPath.startsWith(normalizedPattern);
   }
 
+  if (!normalizedPattern.includes("/")) {
+    return wildcardPatternToRegExp(normalizedPattern).test(pathBasename(normalizedPath));
+  }
+
+  const regex = wildcardPatternToRegExp(normalizedPattern);
+  return regex.test(normalizedPath) || normalizedPath.endsWith(`/${normalizedPattern}`);
+}
+
+function wildcardPatternToRegExp(pattern: string): RegExp {
   const regex = new RegExp(
-    `^${escapeRegExp(normalizedPattern)
+    `^${escapeRegExp(pattern)
       .replace(/\\\*\\\*/g, ".*")
       .replace(/\\\*/g, "[^/]*")}$`
   );
-  return regex.test(normalizedPath) || normalizedPath.endsWith(`/${normalizedPattern}`);
+  return regex;
 }
 
 function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function pathBasename(value: string): string {
+  return value.split("/").pop() ?? value;
 }
 
 function hasValidOwner(entry: CodeownersEntry): boolean {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { findUnownedFiles, parseCodeowners } from "../src/index.js";
+import { findUnownedFiles, matchesCodeownersPattern, parseCodeowners } from "../src/index.js";
 
 describe("CODEOWNERS", () => {
   it("parses entries and reports invalid lines", () => {
@@ -22,6 +22,17 @@ src/** @maintainers/core
 `);
 
     expect(findUnownedFiles(["src/index.ts", ".github/workflows/release.yml", "README.md"], parsed.entries)).toEqual([
+      "README.md"
+    ]);
+  });
+
+  it("matches slashless patterns against file basenames in any directory", () => {
+    const parsed = parseCodeowners(`
+*.ts @maintainers/typescript
+`);
+
+    expect(matchesCodeownersPattern("*.ts", "src/index.ts")).toBe(true);
+    expect(findUnownedFiles(["src/index.ts", "packages/core/src/index.ts", "README.md"], parsed.entries)).toEqual([
       "README.md"
     ]);
   });
