@@ -53,6 +53,39 @@ describe("evidence export CLI", () => {
       await close(server);
     }
   });
+
+  it("reports the endpoint when an evidence API response is not JSON", async () => {
+    const outputDir = await mkdtemp(path.join(os.tmpdir(), "maintainerops-evidence-test-"));
+    tempDirs.push(outputDir);
+    const server = createServer((request, response) => {
+      if (new URL(request.url ?? "/", "http://localhost").pathname === "/api/jobs") {
+        response.writeHead(200, { "content-type": "text/plain" });
+        response.end("not-json");
+        return;
+      }
+      handleEvidenceRequest(request, response);
+    });
+
+    try {
+      await listen(server);
+      const address = server.address();
+      if (!address || typeof address === "string") {
+        throw new Error("Test server did not bind to a TCP port.");
+      }
+
+      await expect(
+        execFileAsync(
+          process.execPath,
+          ["scripts/export-evidence.mjs", "--url", `http://127.0.0.1:${address.port}`, "--out", outputDir],
+          { cwd: repoRoot }
+        )
+      ).rejects.toMatchObject({
+        stderr: expect.stringContaining(`/api/jobs returned invalid JSON: not-json`)
+      });
+    } finally {
+      await close(server);
+    }
+  });
 });
 
 function handleEvidenceRequest(request: IncomingMessage, response: ServerResponse): void {

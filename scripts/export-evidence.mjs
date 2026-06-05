@@ -33,7 +33,11 @@ async function getJson(url) {
   if (!response.ok) {
     throw new Error(`${url} returned ${response.status}: ${body}`);
   }
-  return JSON.parse(body);
+  try {
+    return JSON.parse(body);
+  } catch {
+    throw new Error(`${url} returned invalid JSON: ${body.slice(0, 200)}`);
+  }
 }
 
 function renderMarkdown(data) {
