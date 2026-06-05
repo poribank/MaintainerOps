@@ -90,6 +90,7 @@ export class ActionExecutor {
           body: requireString(input.metadata, "body")
         });
       case "create_release_draft":
+        requireWorkItemKind(workItem, input.action, "release");
         return this.github!.createReleaseDraft(workItem, {
           tagName: requireString(input.metadata, "tagName"),
           name: optionalString(input.metadata, "name"),
@@ -103,6 +104,12 @@ export class ActionExecutor {
 
 function isLocalQueueAction(action: string): boolean {
   return action === "triage" || action === "resolve";
+}
+
+function requireWorkItemKind(workItem: WorkItem, action: string, kind: WorkItem["kind"]): void {
+  if (workItem.kind !== kind) {
+    throw new Error(`Action '${action}' requires a ${kind} work item.`);
+  }
 }
 
 function requireString(metadata: Record<string, unknown>, key: string): string {

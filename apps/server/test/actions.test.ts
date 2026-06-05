@@ -53,6 +53,31 @@ describe("ActionExecutor", () => {
     expect(result.metadata.labels).toEqual(["bug"]);
   });
 
+  it("limits release draft creation to release work items", async () => {
+    const executor = new ActionExecutor(fakeGitHub());
+
+    const issueDraft = await executor.execute(workItem(), {
+      action: "create_release_draft",
+      dryRun: false,
+      metadata: { tagName: "v1.2.3" }
+    });
+    const releaseDraft = await executor.execute(workItem({ kind: "release", number: undefined }), {
+      action: "create_release_draft",
+      dryRun: false,
+      metadata: { tagName: "v1.2.3" }
+    });
+
+    expect(issueDraft).toMatchObject({
+      outcome: "failed",
+      metadata: { action: "create_release_draft" }
+    });
+    expect(String(issueDraft.metadata.reason)).toContain("requires a release work item");
+    expect(releaseDraft).toMatchObject({
+      outcome: "applied",
+      metadata: { releaseId: 1 }
+    });
+  });
+
   it("fails GitHub write actions with invalid metadata before calling GitHub", async () => {
     const executor = new ActionExecutor(fakeGitHub());
 
@@ -106,10 +131,10 @@ function fakeGitHub(): GitHubWriteClient {
   };
 }
 
-function workItem(): WorkItem {
+function workItem(overrides: Partial<Pick<WorkItem, "kind" | "number">> = {}): WorkItem {
   return {
     id: "issue:org/repo:1",
-    kind: "issue",
+    kind: overrides.kind ?? "issue",
     status: "open",
     repository: {
       owner: "org",
@@ -119,7 +144,7 @@ function workItem(): WorkItem {
       installationId: 123
     },
     title: "Crash",
-    number: 1,
+    number: overrides.number ?? 1,
     externalId: "issue:org/repo:1",
     createdAt: "2026-01-01T00:00:00.000Z",
     updatedAt: "2026-01-01T00:00:00.000Z",
