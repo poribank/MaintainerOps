@@ -380,8 +380,9 @@ function readSeverity(alert: Record<string, unknown>): "low" | "medium" | "high"
 }
 
 function normalizeSeverity(value: string | undefined): "low" | "medium" | "high" | "critical" | undefined {
-  if (value === "low" || value === "medium" || value === "high" || value === "critical") {
-    return value;
+  const normalized = value?.toLowerCase();
+  if (normalized === "low" || normalized === "medium" || normalized === "high" || normalized === "critical") {
+    return normalized;
   }
   return undefined;
 }

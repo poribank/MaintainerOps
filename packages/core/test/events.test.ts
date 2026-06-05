@@ -274,6 +274,25 @@ describe("normalizeGitHubWebhook", () => {
       title: "Secret scanning alert: GitHub personal access token"
     });
   });
+
+  it("normalizes security alert severity casing", () => {
+    const items = normalizeGitHubWebhook({
+      eventName: "secret_scanning_alert",
+      deliveryId: "delivery-security-severity-casing",
+      payload: {
+        repository: repositoryPayload(),
+        alert: {
+          number: 88,
+          title: "Secret scanning alert",
+          severity: "Critical"
+        },
+        sender: { login: "github-security", type: "Bot" }
+      }
+    });
+
+    expect(items[0]?.analysis.findings[0]?.severity).toBe("critical");
+    expect(items[0]?.analysis.risk.factors.map((factor) => factor.id)).toContain("unresolved-advisory");
+  });
 });
 
 function repositoryPayload() {
