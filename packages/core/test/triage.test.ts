@@ -24,4 +24,15 @@ labels:
 
     expect(recommendations.flatMap((item) => item.labels ?? [])).not.toContain("security");
   });
+
+  it("does not duplicate existing labels with different casing", () => {
+    const recommendations = recommendIssueLabels({
+      title: "Crash when config is loaded",
+      body: "Throws an exception on startup",
+      labels: ["Bug", "Needs-Reproduction"]
+    });
+
+    expect(recommendations.map((item) => item.id)).not.toContain("label:bug");
+    expect(recommendations.map((item) => item.id)).not.toContain("label:needs-reproduction");
+  });
 });
