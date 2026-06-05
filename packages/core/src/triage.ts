@@ -77,6 +77,17 @@ export function recommendIssueLabels(
     });
   }
 
+  if (needsDuplicateReview(text)) {
+    recommendations.push({
+      id: "triage:duplicate-review",
+      action: "review_required",
+      title: "Review possible duplicate",
+      description: "The report references duplicate or already-reported behavior and needs maintainer confirmation.",
+      confidence: 0.68,
+      requiresApproval: false
+    });
+  }
+
   if (recommendations.length === 0) {
     recommendations.push({
       id: "triage:no-action",
@@ -95,4 +106,8 @@ function needsReproduction(text: string, existing: Set<string>, allowed: Set<str
   const looksLikeBug = /\b(error|crash|bug|regression|broken|fails?|exception)\b/i.test(text);
   const hasSteps = /\b(steps to reproduce|reproduction|minimal repro|expected|actual)\b/i.test(text);
   return looksLikeBug && !hasSteps && allowed.has("needs-reproduction") && !existing.has("needs-reproduction");
+}
+
+function needsDuplicateReview(text: string): boolean {
+  return /\b(duplicate|dupe|already reported|same as|related to #\d+|duplicates #\d+)\b/i.test(text);
 }
