@@ -30,7 +30,7 @@ describe("evidence export CLI", () => {
 
       const { stdout } = await execFileAsync(
         process.execPath,
-        ["scripts/export-evidence.mjs", "--url", `http://127.0.0.1:${address.port}`, "--out", outputDir],
+        ["scripts/export-evidence.mjs", "--url", `http://127.0.0.1:${address.port}/`, "--out", outputDir],
         { cwd: repoRoot }
       );
       const exported = JSON.parse(stdout) as { jsonPath: string; markdownPath: string };

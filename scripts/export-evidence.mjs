@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const args = parseArgs(process.argv.slice(2));
-const baseUrl = args.url ?? "http://localhost:3001";
+const baseUrl = normalizeBaseUrl(args.url ?? "http://localhost:3001");
 const outputDir = path.resolve(root, args.out ?? "evidence");
 const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
 const jsonPath = path.join(outputDir, `maintainerops-evidence-${timestamp}.json`);
@@ -109,4 +109,8 @@ function parseArgs(argv) {
     }
   }
   return parsed;
+}
+
+function normalizeBaseUrl(value) {
+  return value.replace(/\/+$/, "");
 }
