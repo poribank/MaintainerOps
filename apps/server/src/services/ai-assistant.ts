@@ -213,15 +213,25 @@ function parseAssistanceJson(text: string): Pick<
 > {
   const parsed = JSON.parse(text) as Partial<AiAssistanceResult>;
   return {
-    summary: typeof parsed.summary === "string" ? parsed.summary : "No summary returned.",
-    rationale: stringArray(parsed.rationale),
-    suggestedActions: stringArray(parsed.suggestedActions),
-    safetyNotes: stringArray(parsed.safetyNotes)
+    summary: nonEmptyString(parsed.summary) ?? "No summary returned.",
+    rationale: stringArrayOrFallback(parsed.rationale, ["No rationale returned."]),
+    suggestedActions: stringArrayOrFallback(parsed.suggestedActions, ["Review the work item manually."]),
+    safetyNotes: stringArrayOrFallback(parsed.safetyNotes, ["Maintainer approval remains required."])
   };
 }
 
-function stringArray(value: unknown): string[] {
-  return Array.isArray(value) ? value.filter((entry): entry is string => typeof entry === "string") : [];
+function stringArrayOrFallback(value: unknown, fallback: string[]): string[] {
+  if (!Array.isArray(value)) return fallback;
+  const strings = value
+    .map((entry) => nonEmptyString(entry))
+    .filter((entry): entry is string => Boolean(entry));
+  return strings.length > 0 ? strings : fallback;
+}
+
+function nonEmptyString(value: unknown): string | undefined {
+  if (typeof value !== "string") return undefined;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : undefined;
 }
 
 function labelForKind(kind: AiAssistanceKind): string {
