@@ -65,6 +65,18 @@ Fixtures live in `apps/server/fixtures/github`.
 npm run evidence:export -- --url http://localhost:3001 --out evidence
 ```
 
+If the API is protected with `ADMIN_TOKEN`, keep the token in the environment:
+
+```sh
+ADMIN_TOKEN=<same-token-as-api> npm run evidence:export -- --url http://localhost:3001 --out evidence
+```
+
+You can also pass it explicitly for local demos:
+
+```sh
+npm run evidence:export -- --url http://localhost:3001 --out evidence --admin-token <token>
+```
+
 This writes:
 
 - `evidence/maintainerops-evidence-<timestamp>.json`

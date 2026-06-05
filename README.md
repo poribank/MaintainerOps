@@ -218,6 +218,8 @@ Export application evidence:
 npm run evidence:export -- --url http://localhost:3001 --out evidence
 ```
 
+When `ADMIN_TOKEN` is set on the API, export with the same token in the environment or pass `--admin-token`.
+
 Generated evidence files are ignored by git. See [docs/EVIDENCE_EXPORT.md](docs/EVIDENCE_EXPORT.md).
 
 ## Release preflight
