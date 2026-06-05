@@ -45,12 +45,12 @@ describe("ActionExecutor", () => {
     const result = await executor.execute(workItem(), {
       action: "add_label",
       dryRun: false,
-      metadata: { labels: ["bug"] }
+      metadata: { labels: [" bug ", "good first issue"] }
     });
 
     expect(result.outcome).toBe("applied");
     expect(result.githubRequestId).toBe("request-1");
-    expect(result.metadata.labels).toEqual(["bug"]);
+    expect(result.metadata.labels).toEqual(["bug", "good first issue"]);
   });
 
   it("fails GitHub write actions with invalid metadata before calling GitHub", async () => {
@@ -59,7 +59,7 @@ describe("ActionExecutor", () => {
     const labels = await executor.execute(workItem(), {
       action: "add_label",
       dryRun: false,
-      metadata: { labels: ["bug", ""] }
+      metadata: { labels: ["bug", " "] }
     });
     const check = await executor.execute(workItem(), {
       action: "write_check",
