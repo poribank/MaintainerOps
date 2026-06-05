@@ -20,6 +20,7 @@ Application materials:
 - [API credits plan](docs/API_CREDITS_PLAN.md)
 - [Pilot plan](docs/PILOT_PLAN.md)
 - [GitHub App setup](docs/GITHUB_APP_SETUP.md)
+- [Repository settings](docs/REPOSITORY_SETTINGS.md)
 - [Evidence export](docs/EVIDENCE_EXPORT.md)
 - [Roadmap](ROADMAP.md)
 
