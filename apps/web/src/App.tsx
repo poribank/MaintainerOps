@@ -222,9 +222,9 @@ export function App() {
       body: JSON.stringify(kind === "scorecard" ? { repository: selected.repository.fullName } : { path: "." })
     });
 
-    const data = (await response.json()) as ScannerResult | { error: string };
-    if (!response.ok || "error" in data) {
-      setError("error" in data ? data.error : `Scanner failed: ${response.status}`);
+    const data = await readJsonBody<ScannerResult | { error: string }>(response);
+    if (!response.ok || !data || "error" in data) {
+      setError(data && "error" in data ? data.error : await readApiError(response, "Scanner failed"));
       return;
     }
 
@@ -260,9 +260,9 @@ export function App() {
       body: JSON.stringify({ includeRawContent: false })
     });
 
-    const data = (await response.json()) as { assistance?: AiAssistance; error?: string };
-    if (!response.ok || !data.assistance) {
-      setError(data.error ?? (await readApiError(response, "AI assistance failed")));
+    const data = await readJsonBody<{ assistance?: AiAssistance; error?: string }>(response);
+    if (!response.ok || !data?.assistance) {
+      setError(data?.error ?? (await readApiError(response, "AI assistance failed")));
       return;
     }
 
@@ -610,5 +610,13 @@ export async function readApiError(response: Response, fallback: string): Promis
     return statusMessage;
   } catch {
     return statusMessage;
+  }
+}
+
+export async function readJsonBody<T>(response: Response): Promise<T | undefined> {
+  try {
+    return (await response.json()) as T;
+  } catch {
+    return undefined;
   }
 }
