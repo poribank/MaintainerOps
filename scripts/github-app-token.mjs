@@ -25,11 +25,7 @@ const request = {
 
 const repository = args.repository ?? process.env.GITHUB_REPOSITORY;
 if (repository) {
-  const [, repo] = repository.split("/");
-  if (!repo) {
-    throw new Error("--repository must use owner/name format.");
-  }
-  request.repositories = [repo];
+  request.repositories = [parseRepositoryName(repository)];
 }
 
 const response = await app.octokit.request("POST /app/installations/{installation_id}/access_tokens", request);
@@ -55,6 +51,14 @@ if (args.json === "true") {
 
 function normalizePrivateKey(value) {
   return value?.replace(/\\n/g, "\n");
+}
+
+function parseRepositoryName(value) {
+  const parts = value.split("/");
+  if (parts.length !== 2 || parts.some((part) => part.trim().length === 0)) {
+    throw new Error("--repository must use owner/name format.");
+  }
+  return parts[1];
 }
 
 function parseArgs(argv) {
