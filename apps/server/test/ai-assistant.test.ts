@@ -97,6 +97,27 @@ describe("Maintainer AI assistant", () => {
     });
   });
 
+  it("does not mark raw content as redacted when it is only included", async () => {
+    const fetchMock = stubOpenAi(outputTextResponse());
+    const assistant = new OpenAiMaintainerAssistant(
+      config({ provider: "openai", apiKey: "test-key", maxInputChars: 200 })
+    );
+
+    const result = await assistant.assist(workItem(), {
+      kind: "issue_triage",
+      includeRawContent: true,
+      rawContent: "Plain maintainer context without credentials."
+    });
+
+    const { input } = sentOpenAiRequest(fetchMock);
+    expect(input.rawContent).toBe("Plain maintainer context without credentials.");
+    expect(input.safetyPolicy.rawContentWasRedacted).toBe(false);
+    expect(result).toMatchObject({
+      usedRawContent: true,
+      redacted: false
+    });
+  });
+
   it("parses nested Responses API text content", async () => {
     stubOpenAi(
       new Response(
