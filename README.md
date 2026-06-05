@@ -209,6 +209,12 @@ Replay bundled GitHub webhook fixtures into that local API:
 npm run demo:replay -- --url http://localhost:3001/webhooks/github --secret dev-secret
 ```
 
+Run the fuller smoke flow when you want demo evidence that includes webhook ingest, a dry-run write action, disabled-by-default AI assistance, and one background scan job:
+
+```sh
+npm run demo:smoke -- --url http://localhost:3001 --secret dev-secret
+```
+
 Export application evidence:
 
 ```sh
