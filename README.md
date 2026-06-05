@@ -21,6 +21,7 @@ Application materials:
 - [Pilot plan](docs/PILOT_PLAN.md)
 - [GitHub App setup](docs/GITHUB_APP_SETUP.md)
 - [Evidence export](docs/EVIDENCE_EXPORT.md)
+- [Maintainers](MAINTAINERS.md)
 - [Roadmap](ROADMAP.md)
 
 ## MVP capabilities
