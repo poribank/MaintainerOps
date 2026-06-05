@@ -20,4 +20,18 @@ describe("createAuditLogEntry", () => {
     expect(first.id).not.toBe(second.id);
     expect(first.id).toContain("audit:2026-01-01T00:00:00.000Z:org/repo:triage");
   });
+
+  it("captures metadata as a creation-time snapshot", () => {
+    const metadata = { nested: { value: "original" } };
+    const entry = createAuditLogEntry({
+      actor: "maintainer",
+      action: "triage",
+      repository: "org/repo",
+      metadata
+    });
+
+    metadata.nested.value = "mutated";
+
+    expect(entry.metadata).toEqual({ nested: { value: "original" } });
+  });
 });

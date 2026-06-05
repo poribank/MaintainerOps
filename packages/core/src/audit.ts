@@ -26,7 +26,7 @@ export function createAuditLogEntry(input: CreateAuditLogInput): AuditLogEntry {
     repository: input.repository,
     dryRun: input.dryRun ?? true,
     outcome: input.outcome ?? "recorded",
-    metadata: input.metadata ?? {}
+    metadata: structuredClone(input.metadata ?? {})
   };
 
   if (input.workItemId) entry.workItemId = input.workItemId;
