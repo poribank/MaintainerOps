@@ -84,6 +84,27 @@ describe("normalizeGitHubWebhook", () => {
     expect(items[0]?.analysis.recommendations.map((item) => item.action)).toContain("write_check");
   });
 
+  it("treats first-timer pull requests as new contributor risk", () => {
+    const items = normalizeGitHubWebhook({
+      eventName: "pull_request",
+      deliveryId: "delivery-first-timer-pr",
+      payload: {
+        repository: repositoryPayload(),
+        number: 8,
+        pull_request: {
+          number: 8,
+          title: "Clarify setup docs",
+          html_url: "https://github.com/org/repo/pull/8",
+          author_association: "FIRST_TIMER",
+          labels: []
+        },
+        sender: { login: "new-user", type: "User" }
+      }
+    });
+
+    expect(items[0]?.analysis.risk.factors.map((factor) => factor.id)).toContain("new-contributor");
+  });
+
   it("marks closed pull request events as resolved", () => {
     const items = normalizeGitHubWebhook({
       eventName: "pull_request",

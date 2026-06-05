@@ -51,7 +51,7 @@ function normalizePullRequest(
     risk: scoreWorkItem({
       kind: "pull_request",
       labels,
-      newContributor: readString(pullRequest.author_association) === "FIRST_TIME_CONTRIBUTOR"
+      newContributor: isNewContributorAssociation(readString(pullRequest.author_association))
     }),
     findings: [],
     recommendations: [
@@ -332,6 +332,10 @@ function statusFromGitHubState(state: string | undefined, action: string | undef
 
 function releaseStatusFromAction(action: string | undefined): WorkItemStatus {
   return action === "deleted" || action === "unpublished" ? "resolved" : "open";
+}
+
+function isNewContributorAssociation(value: string | undefined): boolean {
+  return value === "FIRST_TIME_CONTRIBUTOR" || value === "FIRST_TIMER";
 }
 
 function readActor(value: unknown): GitHubActorRef | undefined {
