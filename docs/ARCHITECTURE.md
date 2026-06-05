@@ -30,6 +30,14 @@ Scorecard uses `scorecard --repo=github.com/owner/name --format=json` and inheri
 
 For long-running scans, callers enqueue work through `POST /api/jobs/scans/scorecard` or `POST /api/jobs/scans/osv` and poll `GET /api/jobs/:id`. `QUEUE_DRIVER=memory` processes jobs in the API process. `QUEUE_DRIVER=bullmq` stores jobs in Redis and can process them inline or in the dedicated `npm run worker` process.
 
+## AI assistance flow
+
+AI assistance is optional and disabled by default. The dashboard calls `POST /api/work-items/:id/ai-assist` with normalized work item metadata and `includeRawContent=false`, so no raw repository content is transferred in the default UI flow.
+
+Raw content can be included only when the API request explicitly asks for it and provides a repository policy source that enables AI for the configured provider and allows raw-content retention. The server redacts sensitive text before provider transfer, records every AI assistance request in the audit log, and reports request and raw-content transfer counts through `/api/pilot/metrics`.
+
+When AI is not configured, the same endpoint returns a disabled fallback based on rule-derived recommendations. This keeps demo and pilot evidence reproducible without external model credentials.
+
 ## Supply-chain workflows
 
 CI runs the repository check suite on pushes and pull requests. CodeQL runs JavaScript/TypeScript analysis, Package verifies npm workspace tarballs and Docker image construction, Scorecard uploads SARIF security posture results, and Release Preflight verifies checks, tarballs, SBOM generation, and Docker build output for tags or manual release candidates.
