@@ -26,7 +26,7 @@ export function createAuditLogEntry(input: CreateAuditLogInput): AuditLogEntry {
     repository: input.repository,
     dryRun: input.dryRun ?? true,
     outcome: input.outcome ?? "recorded",
-    metadata: input.metadata ?? {}
+    metadata: cloneMetadata(input.metadata ?? {})
   };
 
   if (input.workItemId) entry.workItemId = input.workItemId;
@@ -34,4 +34,8 @@ export function createAuditLogEntry(input: CreateAuditLogInput): AuditLogEntry {
   if (input.githubRequestId) entry.githubRequestId = input.githubRequestId;
 
   return entry;
+}
+
+function cloneMetadata(metadata: Record<string, unknown>): Record<string, unknown> {
+  return structuredClone(metadata) as Record<string, unknown>;
 }
