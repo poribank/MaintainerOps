@@ -17,11 +17,13 @@ export interface RiskScoreInput {
 
 const SECURITY_PATH_PATTERNS = [
   /^\.github\/workflows\//,
-  /^\.github\/dependabot\.yml$/,
+  /^\.github\/dependabot\.ya?ml$/,
   /^\.github\/CODEOWNERS$/,
   /^CODEOWNERS$/,
   /^SECURITY\.md$/i,
+  /^package\.json$/,
   /^package-lock\.json$/,
+  /^npm-shrinkwrap\.json$/,
   /^pnpm-lock\.yaml$/,
   /^yarn\.lock$/,
   /^Cargo\.lock$/,
