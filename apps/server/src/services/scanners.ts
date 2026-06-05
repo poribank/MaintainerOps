@@ -100,7 +100,12 @@ function parseOptionalJson(value: string): unknown | undefined {
 }
 
 export function assertRepositoryFullName(value: string): void {
-  if (!/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(value)) {
+  const segments = value.split("/");
+  if (
+    segments.length !== 2 ||
+    segments.some((segment) => segment === "." || segment === "..") ||
+    !/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(value)
+  ) {
     throw new Error("Repository must be in owner/name format.");
   }
 }
