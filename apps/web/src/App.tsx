@@ -581,9 +581,17 @@ export function buildStats(items: WorkItem[]) {
   return {
     open: items.filter((item) => item.status === "open").length,
     urgent: items.filter((item) => item.analysis.risk.priority === "urgent").length,
-    security: items.filter((item) => item.kind === "security" || item.labels.includes("security")).length,
+    security: items.filter(hasSecuritySignal).length,
     repositories: new Set(items.map((item) => item.repository.fullName)).size
   };
+}
+
+function hasSecuritySignal(item: WorkItem): boolean {
+  return (
+    item.kind === "security" ||
+    item.labels.includes("security") ||
+    item.analysis.findings.some((finding) => finding.source === "security")
+  );
 }
 
 export function scanSummary(json: unknown): string {

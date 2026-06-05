@@ -18,6 +18,20 @@ describe("dashboard helpers", () => {
     });
   });
 
+  it("counts security-source findings in dashboard stats", () => {
+    const stats = buildStats([
+      workItem({
+        id: "issue:org/repo:security-finding",
+        kind: "issue",
+        status: "open",
+        priority: "normal",
+        findings: [{ id: "security:alert", source: "security" }]
+      })
+    ]);
+
+    expect(stats.security).toBe(1);
+  });
+
   it("summarizes Scorecard and OSV scanner payloads", () => {
     expect(scanSummary({ score: 7.2 })).toBe("Score 7.2");
     expect(scanSummary({ results: [{ id: "GHSA-1" }, { id: "GHSA-2" }] })).toBe("2 result groups");
@@ -49,6 +63,7 @@ function workItem(input: {
   kind: WorkItem["kind"];
   status: WorkItem["status"];
   priority: WorkItem["analysis"]["risk"]["priority"];
+  findings?: Array<Pick<WorkItem["analysis"]["findings"][number], "id" | "source">>;
 }): WorkItem {
   return {
     id: input.id,
@@ -68,7 +83,13 @@ function workItem(input: {
         priority: input.priority,
         factors: []
       },
-      findings: [],
+      findings:
+        input.findings?.map((finding) => ({
+          title: finding.id,
+          severity: "high",
+          description: "Security signal.",
+          ...finding
+        })) ?? [],
       recommendations: []
     }
   };
