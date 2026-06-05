@@ -78,8 +78,16 @@ function requiresAdminToken(method: string, url: string): boolean {
 
 function readBearerToken(value: string | string[] | undefined): string | undefined {
   const header = Array.isArray(value) ? value[0] : value;
-  const match = header?.match(/^Bearer\s+(.+)$/i);
-  return match?.[1];
+  if (!header) return undefined;
+
+  const separator = header.indexOf(" ");
+  if (separator === -1) return undefined;
+
+  const scheme = header.slice(0, separator);
+  if (scheme.toLowerCase() !== "bearer") return undefined;
+
+  const token = header.slice(separator + 1).trimStart();
+  return token.length > 0 ? token : undefined;
 }
 
 function constantTimeStringEqual(left: string, right: string): boolean {
