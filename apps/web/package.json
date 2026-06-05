@@ -3,6 +3,10 @@
   "version": "0.2.3",
   "private": true,
   "type": "module",
+  "files": [
+    "dist",
+    "index.html"
+  ],
   "scripts": {
     "build": "tsc -p tsconfig.json && vite build",
     "dev": "vite --host 0.0.0.0",
