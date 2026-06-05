@@ -30,9 +30,10 @@ This plan describes how to turn MaintainerOps from a local MVP into evidence for
 
 ## Week 4: Optional AI Assistance
 
-- Add the policy-gated AI assistant adapter.
+- Enable the policy-gated AI assistant adapter only after the maintainer opts in.
 - Test only on repositories where the maintainer has authorization.
 - Keep raw content disabled until an explicit opt-in policy is reviewed.
+- Verify audit-log entries and `/api/pilot/metrics` raw-content counts for every AI assistance run.
 - Compare AI-generated summaries against maintainer-written notes.
 
 ## Evidence to Capture

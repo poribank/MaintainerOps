@@ -38,14 +38,14 @@ MaintainerOps will use API credits only for opt-in maintainer assistance. The ru
 
 ## Implemented API Integration
 
-The initial integration adds an `AiMaintainerAssistant` service behind configuration gates:
+The current integration includes a `MaintainerAiAssistant` service behind configuration gates:
 
 - input: normalized `WorkItem`, sanitized findings, repository policy, optional redacted text;
 - output: summary, rationale, suggested maintainer actions, and safety notes;
 - storage: audit metadata only in the current endpoint; generated assistance is returned to the caller and raw content is not persisted;
 - observability: audit-log records for every AI assistance request, failed raw-content attempts, and pilot metrics for request counts and raw-content transfer counts.
 
-Planned pilot observability includes token estimates, latency, provider failure rate, and redaction-event counts.
+Current pilot metrics expose AI request counts and raw-content transfer counts. Token estimates, provider latency, provider failure rate, and redaction-event counts remain future pilot observability work.
 
 Current endpoint:
 
@@ -70,6 +70,8 @@ Raw content requests are rejected unless the request includes a repository polic
 - `dataRetention.rawContentDays > 0`
 
 Every AI assistance request is recorded in the audit log. Failed raw-content requests are also recorded with `outcome=failed`.
+
+The OpenAI adapter is covered by local tests for disabled fallback behavior, configuration gating, raw-content omission, redaction and truncation before transfer, nested Responses API text parsing, and provider error reporting.
 
 ## Evaluation Plan
 
