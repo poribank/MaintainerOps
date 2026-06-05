@@ -28,6 +28,30 @@ describe("ActionExecutor", () => {
     expect(result.metadata.mode).toBe("local-queue");
   });
 
+  it("keeps action metadata invariants over caller-provided metadata", async () => {
+    const executor = new ActionExecutor();
+    const dryRun = await executor.execute(workItem(), {
+      action: "write_check",
+      dryRun: true,
+      metadata: { action: "merge", mode: "applied", headSha: "abc123" }
+    });
+    const local = await executor.execute(workItem(), {
+      action: "triage",
+      dryRun: false,
+      metadata: { action: "resolve", mode: "dry-run" }
+    });
+
+    expect(dryRun.metadata).toMatchObject({
+      action: "write_check",
+      mode: "dry-run",
+      headSha: "abc123"
+    });
+    expect(local.metadata).toMatchObject({
+      action: "triage",
+      mode: "local-queue"
+    });
+  });
+
   it("fails non-dry-run actions when GitHub writes are not configured", async () => {
     const executor = new ActionExecutor();
     const result = await executor.execute(workItem(), {
