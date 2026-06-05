@@ -165,19 +165,19 @@ export function App() {
     setError("");
 
     try {
-      const response = await fetch(`${API_BASE}/api/queue`);
+      const response = await fetch(`${API_BASE}/api/queue?limit=100`);
       if (!response.ok) throw new Error(await readApiError(response, "Queue request failed"));
       const data = (await response.json()) as QueueResponse;
       setItems(data.items);
       setSelectedId((current) => current || data.items[0]?.id || "");
 
-      const auditResponse = await fetch(`${API_BASE}/api/audit-log`);
+      const auditResponse = await fetch(`${API_BASE}/api/audit-log?limit=50`);
       if (auditResponse.ok) {
         const auditData = (await auditResponse.json()) as { entries: AuditEntry[] };
         setAudit(auditData.entries);
       }
 
-      const jobsResponse = await fetch(`${API_BASE}/api/jobs`);
+      const jobsResponse = await fetch(`${API_BASE}/api/jobs?limit=20`);
       if (jobsResponse.ok) {
         const jobsData = (await jobsResponse.json()) as { items: MaintainerJob[] };
         setJobs(jobsData.items);

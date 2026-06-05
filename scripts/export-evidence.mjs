@@ -15,10 +15,10 @@ const evidence = {
   generatedAt: new Date().toISOString(),
   baseUrl,
   readyz: await getJson(`${baseUrl}/readyz`),
-  queue: await getJson(`${baseUrl}/api/queue`),
+  queue: await getJson(`${baseUrl}/api/queue?limit=100`),
   metrics: await getJson(`${baseUrl}/api/pilot/metrics`),
-  jobs: await getJson(`${baseUrl}/api/jobs`),
-  audit: await getJson(`${baseUrl}/api/audit-log`)
+  jobs: await getJson(`${baseUrl}/api/jobs?limit=100`),
+  audit: await getJson(`${baseUrl}/api/audit-log?limit=100`)
 };
 
 await mkdir(outputDir, { recursive: true });

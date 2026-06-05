@@ -213,6 +213,41 @@ describe("server", () => {
     expect(zero.json<{ items: unknown[] }>().items).toHaveLength(1);
   });
 
+  it("limits queue and audit log payloads for demo clients", async () => {
+    const { app, store } = await createTestApp();
+    const items = store.listWorkItems();
+    expect(items.length).toBeGreaterThan(1);
+
+    await app.inject({
+      method: "POST",
+      url: `/api/work-items/${encodeURIComponent(items[0]!.id)}/actions`,
+      headers: { "content-type": "application/json" },
+      payload: JSON.stringify({ action: "triage", actor: "maintainer", dryRun: false })
+    });
+    await app.inject({
+      method: "POST",
+      url: `/api/work-items/${encodeURIComponent(items[1]!.id)}/actions`,
+      headers: { "content-type": "application/json" },
+      payload: JSON.stringify({ action: "resolve", actor: "maintainer", dryRun: false })
+    });
+
+    const queue = await app.inject({ method: "GET", url: "/api/queue?limit=1" });
+    expect(queue.statusCode).toBe(200);
+    expect(queue.json<{ total: number; count: number; limit: number; items: unknown[] }>()).toMatchObject({
+      total: items.length,
+      count: 1,
+      limit: 1
+    });
+
+    const audit = await app.inject({ method: "GET", url: "/api/audit-log?limit=1" });
+    expect(audit.statusCode).toBe(200);
+    expect(audit.json<{ total: number; count: number; limit: number; entries: unknown[] }>()).toMatchObject({
+      total: 2,
+      count: 1,
+      limit: 1
+    });
+  });
+
   it("returns disabled AI assistance without external configuration", async () => {
     const { app, store } = await createTestApp();
     const item = store.listWorkItems()[0];

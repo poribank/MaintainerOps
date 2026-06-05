@@ -70,6 +70,8 @@ This writes:
 - `evidence/maintainerops-evidence-<timestamp>.json`
 - `evidence/maintainerops-evidence-<timestamp>.md`
 
+The export includes pilot metrics plus up to 100 queue items, jobs, and audit entries. Metrics remain the source of truth for full counts when a pilot instance has more activity than the evidence sample.
+
 Generated evidence files are gitignored by default. Review them before attaching to an application or issue.
 
 ## 4. Real Pilot Guidance
