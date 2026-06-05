@@ -97,6 +97,25 @@ describe("Maintainer AI assistant", () => {
     });
   });
 
+  it("does not mark unchanged raw repository content as redacted", async () => {
+    const fetchMock = stubOpenAi(outputTextResponse());
+    const assistant = new OpenAiMaintainerAssistant(config({ provider: "openai", apiKey: "test-key" }));
+
+    const result = await assistant.assist(workItem(), {
+      kind: "pr_review",
+      includeRawContent: true,
+      rawContent: "Documentation update with no sensitive values."
+    });
+
+    const { input } = sentOpenAiRequest(fetchMock);
+    expect(input.rawContent).toBe("Documentation update with no sensitive values.");
+    expect(input.safetyPolicy.rawContentWasRedacted).toBe(false);
+    expect(result).toMatchObject({
+      usedRawContent: true,
+      redacted: false
+    });
+  });
+
   it("parses nested Responses API text content", async () => {
     stubOpenAi(
       new Response(
