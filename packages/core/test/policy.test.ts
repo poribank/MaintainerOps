@@ -32,6 +32,19 @@ dataRetention:
     expect(canSendContentToAi(policy)).toBe(false);
   });
 
+  it("normalizes repository label allowlists", () => {
+    const policy = parsePolicy(`
+version: 1
+labels:
+  allowed:
+    - " Bug "
+    - bug
+    - SECURITY
+`);
+
+    expect(policy.labels.allowed).toEqual(["bug", "security"]);
+  });
+
   it("rejects invalid retention windows", () => {
     const result = validatePolicy(`
 version: 1
