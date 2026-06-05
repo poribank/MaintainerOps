@@ -383,6 +383,9 @@ function normalizeSeverity(value: string | undefined): "low" | "medium" | "high"
   if (value === "low" || value === "medium" || value === "high" || value === "critical") {
     return value;
   }
+  if (value === "error") return "high";
+  if (value === "warning") return "medium";
+  if (value === "note") return "low";
   return undefined;
 }
 

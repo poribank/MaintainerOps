@@ -211,6 +211,26 @@ describe("normalizeGitHubWebhook", () => {
     expect(items[0]?.analysis.findings[0]?.severity).toBe("high");
   });
 
+  it("maps code scanning rule severity levels without overstating low alerts", () => {
+    const items = normalizeGitHubWebhook({
+      eventName: "code_scanning_alert",
+      deliveryId: "delivery-code-scanning-note",
+      payload: {
+        repository: repositoryPayload(),
+        alert: {
+          number: 14,
+          rule: {
+            description: "Style-only static analysis finding",
+            severity: "note"
+          }
+        },
+        sender: { login: "github-security", type: "Bot" }
+      }
+    });
+
+    expect(items[0]?.analysis.findings[0]?.severity).toBe("low");
+  });
+
   it("preserves nested dependabot alert severity", () => {
     const items = normalizeGitHubWebhook({
       eventName: "dependabot_alert",
