@@ -80,6 +80,23 @@ describe("SecurityScannerRunner", () => {
       json: { results: [{ id: "GHSA-demo" }] }
     });
   });
+
+  it("fails successful scanner commands that return invalid JSON", async () => {
+    const command = await writeExecutable("invalid-json-scanner", "printf 'not json'\n");
+    const runner = new SecurityScannerRunner(
+      loadConfig({
+        NODE_ENV: "test",
+        SCORECARD_COMMAND: command
+      })
+    );
+
+    await expect(runner.runScorecard("org/repo")).resolves.toMatchObject({
+      scanner: "scorecard",
+      status: "failed",
+      command,
+      error: "scorecard did not return valid JSON."
+    });
+  });
 });
 
 async function writeExecutable(name: string, body: string): Promise<string> {

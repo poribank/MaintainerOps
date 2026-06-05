@@ -43,6 +43,18 @@ async function runJsonCommand(
       timeout: timeoutMs,
       maxBuffer: 1024 * 1024 * 20
     });
+    const parsedJson = parseOptionalJson(result.stdout);
+    if (result.stdout.trim().length > 0 && parsedJson === undefined) {
+      return {
+        scanner,
+        status: "failed",
+        command,
+        args,
+        stdout: result.stdout,
+        stderr: result.stderr,
+        error: `${scanner} did not return valid JSON.`
+      };
+    }
     return {
       scanner,
       status: "completed",
@@ -50,7 +62,7 @@ async function runJsonCommand(
       args,
       stdout: result.stdout,
       stderr: result.stderr,
-      json: parseOptionalJson(result.stdout)
+      json: parsedJson
     };
   } catch (error) {
     const executionError = error as NodeJS.ErrnoException & { stdout?: string; stderr?: string };
