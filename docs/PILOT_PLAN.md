@@ -2,6 +2,8 @@
 
 This plan describes how to turn MaintainerOps from a local MVP into evidence for a Codex for Open Source application or follow-up review.
 
+Use `docs/PILOT_RUNBOOK.md` for the step-by-step dry-run, persistence, evidence, and cleanup procedure.
+
 ## Week 1: Public Repository Readiness
 
 - Publish the repository publicly.
