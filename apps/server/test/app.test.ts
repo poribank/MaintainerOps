@@ -69,6 +69,37 @@ describe("server", () => {
     expect(response.statusCode).toBe(401);
   });
 
+  it("protects admin API routes when an admin token is configured", async () => {
+    const { app } = await createSecuredTestApp(false);
+    const payload = JSON.stringify(issuePayload());
+
+    const health = await app.inject({ method: "GET", url: "/healthz" });
+    expect(health.statusCode).toBe(200);
+
+    const unauthorized = await app.inject({ method: "GET", url: "/api/queue" });
+    expect(unauthorized.statusCode).toBe(401);
+
+    const authorized = await app.inject({
+      method: "GET",
+      url: "/api/queue",
+      headers: { authorization: "Bearer admin-secret" }
+    });
+    expect(authorized.statusCode).toBe(200);
+
+    const webhook = await app.inject({
+      method: "POST",
+      url: "/webhooks/github",
+      headers: {
+        "content-type": "application/json",
+        "x-github-event": "issues",
+        "x-github-delivery": "delivery-admin-token",
+        "x-hub-signature-256": sign(payload, "test-secret")
+      },
+      payload
+    });
+    expect(webhook.statusCode).toBe(202);
+  });
+
   it("rejects malformed JSON request bodies with a client error", async () => {
     const { app, store } = await createTestApp();
     const item = store.listWorkItems()[0];
@@ -329,6 +360,19 @@ async function createTestApp(seedDemoData = true) {
     PORT: "0",
     WEB_ORIGIN: "http://localhost:5173",
     GITHUB_WEBHOOK_SECRET: "test-secret",
+    SEED_DEMO_DATA: seedDemoData ? "true" : "false"
+  });
+  return createApp({ config, store: new InMemoryMaintainerStore() });
+}
+
+async function createSecuredTestApp(seedDemoData = true) {
+  const config = loadConfig({
+    NODE_ENV: "test",
+    HOST: "127.0.0.1",
+    PORT: "0",
+    WEB_ORIGIN: "http://localhost:5173",
+    GITHUB_WEBHOOK_SECRET: "test-secret",
+    ADMIN_TOKEN: "admin-secret",
     SEED_DEMO_DATA: seedDemoData ? "true" : "false"
   });
   return createApp({ config, store: new InMemoryMaintainerStore() });

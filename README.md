@@ -60,6 +60,7 @@ MaintainerOps defaults to a safe local mode:
 - `STORE_DRIVER=memory`
 - `QUEUE_DRIVER=memory`
 - `GITHUB_WRITES_ENABLED=false`
+- `ADMIN_TOKEN` unset
 - `SEED_DEMO_DATA=true`
 
 For a persistent pilot, create the PostgreSQL schema from `apps/server/db/schema.sql` and use:
@@ -99,6 +100,8 @@ GitHub writes require all of the following:
 Supported write actions are `write_check`, `add_label`, `write_issue_comment`, `write_pr_comment`, and `create_release_draft`.
 
 Local queue status actions are separate from GitHub writes. `triage` and `resolve` update only MaintainerOps state, require `dryRun:false` to apply, and are always audit logged.
+
+Set `ADMIN_TOKEN` to require `Authorization: Bearer <token>` on MaintainerOps API routes. Health, readiness, and GitHub webhook endpoints remain available so probes and webhook delivery keep working. For the local Vite dashboard, set `VITE_ADMIN_TOKEN` only in trusted local builds; for public deployments, prefer a reverse proxy or platform access control in front of the dashboard.
 
 For a live local webhook pilot, point the GitHub App webhook URL at a stable proxy such as Smee and forward it to the local API:
 
