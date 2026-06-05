@@ -266,9 +266,22 @@ export function mergeIngestedWorkItem(existing: WorkItem, incoming: WorkItem): W
   return {
     ...incoming,
     createdAt: existing.createdAt,
+    repository: mergeRepositoryRef(existing.repository, incoming.repository),
     status: nextIngestedStatus(existing.status, incoming.status),
     sourceDeliveryIds: Array.from(new Set([...existing.sourceDeliveryIds, ...incoming.sourceDeliveryIds]))
   };
+}
+
+function mergeRepositoryRef(existing: GitHubRepositoryRef, incoming: GitHubRepositoryRef): GitHubRepositoryRef {
+  const repository: GitHubRepositoryRef = { ...incoming };
+  if (repository.id === undefined && existing.id !== undefined) repository.id = existing.id;
+  if (repository.installationId === undefined && existing.installationId !== undefined) {
+    repository.installationId = existing.installationId;
+  }
+  if (repository.defaultBranch === undefined && existing.defaultBranch !== undefined) {
+    repository.defaultBranch = existing.defaultBranch;
+  }
+  return repository;
 }
 
 function nextIngestedStatus(existing: WorkItemStatus, incoming: WorkItemStatus): WorkItemStatus {

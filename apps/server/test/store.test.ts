@@ -37,6 +37,24 @@ describe("MaintainerStore ingest status merging", () => {
     store.recordAction(openItem.id, { actor: "maintainer", action: "resolve", dryRun: false, outcome: "failed" });
     expect(store.getWorkItem(openItem.id)?.status).toBe("open");
   });
+
+  it("preserves repository metadata when later webhooks omit optional fields", () => {
+    const store = new InMemoryMaintainerStore();
+    const first = workItem("open", "delivery-1");
+    first.repository.id = 123;
+    first.repository.installationId = 456;
+    first.repository.defaultBranch = "main";
+
+    const second = workItem("open", "delivery-2");
+    store.ingest("delivery-1", [first]);
+    store.ingest("delivery-2", [second]);
+
+    expect(store.getWorkItem(first.id)?.repository).toMatchObject({
+      id: 123,
+      installationId: 456,
+      defaultBranch: "main"
+    });
+  });
 });
 
 function workItem(status: WorkItem["status"], deliveryId: string): WorkItem {
