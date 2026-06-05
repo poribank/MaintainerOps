@@ -25,7 +25,22 @@ export function registerApiRoutes(
   aiAssistant: MaintainerAiAssistant
 ): void {
   app.get("/healthz", async () => ({ ok: true }));
-  app.get("/readyz", async () => ({ ok: true, store: config.storage.driver, queue: config.queue.driver }));
+  app.get("/readyz", async (_request, reply) => {
+    const checks = await runReadinessChecks(store, jobs);
+    const ok = checks.store && checks.queue;
+    const payload = {
+      ok,
+      store: config.storage.driver,
+      queue: config.queue.driver,
+      checks
+    };
+
+    if (!ok) {
+      return reply.code(503).send({ ...payload, error: "Readiness checks failed." });
+    }
+
+    return payload;
+  });
 
   app.get("/api/github-app/permissions", async () => ({
     minimum: MINIMUM_GITHUB_APP_PERMISSIONS,
@@ -407,4 +422,27 @@ function parseJobListLimit(value: string | undefined): number {
   const parsed = Number.parseInt(value, 10);
   if (!Number.isFinite(parsed)) return 50;
   return Math.min(Math.max(parsed, 1), 100);
+}
+
+async function runReadinessChecks(store: MaintainerStore, jobs: JobQueue): Promise<{ store: boolean; queue: boolean }> {
+  const checks = {
+    store: false,
+    queue: false
+  };
+
+  try {
+    await store.listRepositories();
+    checks.store = true;
+  } catch {
+    checks.store = false;
+  }
+
+  try {
+    await jobs.list(1);
+    checks.queue = true;
+  } catch {
+    checks.queue = false;
+  }
+
+  return checks;
 }

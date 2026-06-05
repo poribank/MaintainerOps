@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { createApp } from "../src/app.js";
 import { loadConfig } from "../src/config.js";
 import type { MaintainerAiAssistant } from "../src/services/ai-assistant.js";
+import type { JobQueue, MaintainerJob, MaintainerJobInput, MaintainerJobType } from "../src/services/jobs.js";
 import { InMemoryMaintainerStore } from "../src/services/store.js";
 
 describe("server", () => {
@@ -12,9 +13,43 @@ describe("server", () => {
     const health = await app.inject({ method: "GET", url: "/healthz" });
     expect(health.statusCode).toBe(200);
 
+    const ready = await app.inject({ method: "GET", url: "/readyz" });
+    expect(ready.statusCode).toBe(200);
+    expect(ready.json<{ checks: { store: boolean; queue: boolean } }>().checks).toEqual({
+      store: true,
+      queue: true
+    });
+
     const queue = await app.inject({ method: "GET", url: "/api/queue" });
     expect(queue.statusCode).toBe(200);
     expect(queue.json<{ total: number }>().total).toBeGreaterThan(0);
+  });
+
+  it("reports readiness failures without failing liveness", async () => {
+    const config = testConfig(false);
+    const storeFailure = await createApp({ config, store: new FailingReadinessStore() });
+    const queueFailure = await createApp({
+      config,
+      store: new InMemoryMaintainerStore(),
+      jobs: failingJobQueue()
+    });
+
+    const health = await storeFailure.app.inject({ method: "GET", url: "/healthz" });
+    expect(health.statusCode).toBe(200);
+
+    const storeReady = await storeFailure.app.inject({ method: "GET", url: "/readyz" });
+    expect(storeReady.statusCode).toBe(503);
+    expect(storeReady.json<{ error: string; checks: { store: boolean; queue: boolean } }>()).toMatchObject({
+      error: "Readiness checks failed.",
+      checks: { store: false, queue: true }
+    });
+
+    const queueReady = await queueFailure.app.inject({ method: "GET", url: "/readyz" });
+    expect(queueReady.statusCode).toBe(503);
+    expect(queueReady.json<{ error: string; checks: { store: boolean; queue: boolean } }>()).toMatchObject({
+      error: "Readiness checks failed.",
+      checks: { store: true, queue: false }
+    });
   });
 
   it("accepts signed GitHub webhooks once", async () => {
@@ -323,7 +358,11 @@ describe("server", () => {
 });
 
 async function createTestApp(seedDemoData = true) {
-  const config = loadConfig({
+  return createApp({ config: testConfig(seedDemoData), store: new InMemoryMaintainerStore() });
+}
+
+function testConfig(seedDemoData = true) {
+  return loadConfig({
     NODE_ENV: "test",
     HOST: "127.0.0.1",
     PORT: "0",
@@ -331,7 +370,6 @@ async function createTestApp(seedDemoData = true) {
     GITHUB_WEBHOOK_SECRET: "test-secret",
     SEED_DEMO_DATA: seedDemoData ? "true" : "false"
   });
-  return createApp({ config, store: new InMemoryMaintainerStore() });
 }
 
 async function createAiTestApp() {
@@ -367,6 +405,29 @@ function fakeAiAssistant(): MaintainerAiAssistant {
         usedRawContent: request.includeRawContent,
         redacted: false
       };
+    }
+  };
+}
+
+class FailingReadinessStore extends InMemoryMaintainerStore {
+  override listRepositories(): never {
+    throw new Error("store unavailable");
+  }
+}
+
+function failingJobQueue(): JobQueue {
+  return {
+    async enqueue(_type: MaintainerJobType, _input: MaintainerJobInput): Promise<MaintainerJob> {
+      throw new Error("queue unavailable");
+    },
+    async get(): Promise<MaintainerJob | undefined> {
+      return undefined;
+    },
+    async list(): Promise<MaintainerJob[]> {
+      throw new Error("queue unavailable");
+    },
+    async close(): Promise<void> {
+      return undefined;
     }
   };
 }
