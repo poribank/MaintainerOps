@@ -77,4 +77,10 @@ Generated evidence files are gitignored by default. Review them before attaching
 For a real Codex for Open Source application, prefer evidence from a repository you own, maintain, or are authorized to administer. Demo fixtures are useful for reproducibility, but they do not prove real ecosystem usage.
 
 Capture real pilot evidence after following `docs/GITHUB_APP_SETUP.md`.
-When using Scorecard in a live pilot, start the API with `GITHUB_AUTH_TOKEN` set to a token that can read the pilot repository metadata. OSV Scanner resolves scan requests from `SCANNER_WORKSPACE_ROOT`, so set it explicitly when the server process starts outside the repository root.
+When using Scorecard in a live pilot, start the API with `GITHUB_AUTH_TOKEN` set to a token that can read the pilot repository metadata:
+
+```sh
+export GITHUB_AUTH_TOKEN=$(npm run --silent github:token -- --installation-id "$GITHUB_INSTALLATION_ID")
+```
+
+OSV Scanner resolves scan requests from `SCANNER_WORKSPACE_ROOT`, so set it explicitly when the server process starts outside the repository root.

@@ -162,6 +162,11 @@ The dashboard does not send raw content.
 Scorecard and OSV Scanner are optional external binaries. The server returns `unavailable` when they are not on `PATH`.
 OSV Scanner paths are restricted to `SCANNER_WORKSPACE_ROOT`, which defaults to the npm invocation directory.
 Set `GITHUB_AUTH_TOKEN` in the server environment when running Scorecard against GitHub repositories to avoid unauthenticated API limits.
+For an installed GitHub App, generate a short-lived installation token without saving it to disk:
+
+```sh
+export GITHUB_AUTH_TOKEN=$(npm run --silent github:token -- --installation-id "$GITHUB_INSTALLATION_ID")
+```
 
 ```sh
 curl -X POST http://localhost:3000/api/scans/scorecard \

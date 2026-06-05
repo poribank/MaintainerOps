@@ -95,7 +95,13 @@ SEED_DEMO_DATA=false \
 npm run dev
 ```
 
-Run Scorecard with a GitHub App installation token or a least-privilege user token in `GITHUB_AUTH_TOKEN` so the scanner can read repository metadata without hitting anonymous API limits. OSV Scanner uses `SCANNER_WORKSPACE_ROOT` as its allowed root and rejects paths outside that directory.
+Run Scorecard with a GitHub App installation token or a least-privilege user token in `GITHUB_AUTH_TOKEN` so the scanner can read repository metadata without hitting anonymous API limits:
+
+```sh
+export GITHUB_AUTH_TOKEN=$(npm run --silent github:token -- --installation-id "$GITHUB_INSTALLATION_ID")
+```
+
+OSV Scanner uses `SCANNER_WORKSPACE_ROOT` as its allowed root and rejects paths outside that directory.
 
 Validated pilot shape:
 
