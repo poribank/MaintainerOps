@@ -7,6 +7,10 @@ describe("request body helpers", () => {
     expect(parseJsonBody({ action: "resolve" })).toEqual({ action: "resolve" });
   });
 
+  it("parses buffered JSON bodies", () => {
+    expect(parseJsonBody(Buffer.from('{"action":"triage"}'))).toEqual({ action: "triage" });
+  });
+
   it("rejects malformed or non-object JSON bodies", () => {
     expect(() => parseJsonBody("{")).toThrow("valid JSON");
     expect(() => parseJsonBody("[]")).toThrow("JSON object");
@@ -15,6 +19,9 @@ describe("request body helpers", () => {
 
   it("returns the raw string body used for webhook signature verification", () => {
     expect(readRawBody('{"zen":"Keep it logically awesome."}')).toBe('{"zen":"Keep it logically awesome."}');
+    expect(readRawBody(Buffer.from('{"zen":"Keep it logically awesome."}'))).toBe(
+      '{"zen":"Keep it logically awesome."}'
+    );
     expect(readRawBody({ zen: "Keep it logically awesome." })).toBe('{"zen":"Keep it logically awesome."}');
     expect(readRawBody(undefined)).toBe("{}");
   });
