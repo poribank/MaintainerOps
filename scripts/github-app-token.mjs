@@ -4,8 +4,9 @@ import { App } from "@octokit/app";
 const args = parseArgs(process.argv.slice(2));
 const appId = args.appId ?? process.env.GITHUB_APP_ID;
 const privateKey = normalizePrivateKey(args.privateKey ?? process.env.GITHUB_PRIVATE_KEY);
-const installationId = Number.parseInt(args.installationId ?? process.env.GITHUB_INSTALLATION_ID ?? "", 10);
+const installationId = parsePositiveInteger(args.installationId ?? process.env.GITHUB_INSTALLATION_ID);
 const apiVersion = args.apiVersion ?? process.env.GITHUB_API_VERSION ?? "2026-03-10";
+const repository = parseRepositorySelector(args.repository ?? process.env.GITHUB_REPOSITORY);
 
 if (!appId) {
   throw new Error("GITHUB_APP_ID or --app-id is required.");
@@ -13,7 +14,7 @@ if (!appId) {
 if (!privateKey) {
   throw new Error("GITHUB_PRIVATE_KEY or --private-key is required.");
 }
-if (!Number.isFinite(installationId)) {
+if (installationId === undefined) {
   throw new Error("GITHUB_INSTALLATION_ID or --installation-id is required.");
 }
 
@@ -23,13 +24,8 @@ const request = {
   headers: { "X-GitHub-Api-Version": apiVersion }
 };
 
-const repository = args.repository ?? process.env.GITHUB_REPOSITORY;
 if (repository) {
-  const [, repo] = repository.split("/");
-  if (!repo) {
-    throw new Error("--repository must use owner/name format.");
-  }
-  request.repositories = [repo];
+  request.repositories = [repository];
 }
 
 const response = await app.octokit.request("POST /app/installations/{installation_id}/access_tokens", request);
@@ -55,6 +51,25 @@ if (args.json === "true") {
 
 function normalizePrivateKey(value) {
   return value?.replace(/\\n/g, "\n");
+}
+
+function parsePositiveInteger(value) {
+  if (!value || !/^\d+$/.test(value.trim())) {
+    return undefined;
+  }
+  const parsed = Number.parseInt(value, 10);
+  return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : undefined;
+}
+
+function parseRepositorySelector(value) {
+  if (!value) {
+    return undefined;
+  }
+  const parts = value.split("/");
+  if (parts.length !== 2 || !parts[0] || !parts[1]) {
+    throw new Error("--repository must use owner/name format.");
+  }
+  return parts[1];
 }
 
 function parseArgs(argv) {
