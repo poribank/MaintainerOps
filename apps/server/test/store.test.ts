@@ -37,6 +37,59 @@ describe("MaintainerStore ingest status merging", () => {
     store.recordAction(openItem.id, { actor: "maintainer", action: "resolve", dryRun: false, outcome: "failed" });
     expect(store.getWorkItem(openItem.id)?.status).toBe("open");
   });
+
+  it("does not expose mutable references to stored work items or audit entries", () => {
+    const store = new InMemoryMaintainerStore();
+    const openItem = workItem("open", "delivery-1");
+    const result = store.ingest("delivery-1", [openItem]);
+
+    openItem.title = "mutated original";
+    result.items[0]!.title = "mutated ingest result";
+    result.items[0]!.analysis.recommendations.push({
+      id: "test:mutated",
+      action: "add_label",
+      title: "Mutated",
+      description: "This should not leak into the store.",
+      confidence: 1,
+      requiresApproval: false
+    });
+
+    const listed = store.listWorkItems()[0]!;
+    listed.title = "mutated list result";
+    listed.repository.fullName = "mutated/repo";
+    listed.sourceDeliveryIds.push("mutated-delivery");
+
+    const fetched = store.getWorkItem(openItem.id)!;
+    fetched.title = "mutated fetched result";
+    fetched.analysis.risk.factors.push({
+      id: "test:mutated-factor",
+      label: "Mutated factor",
+      points: 100,
+      severity: "critical"
+    });
+
+    const audit = store.recordAction(openItem.id, {
+      actor: "maintainer",
+      action: "triage",
+      dryRun: true,
+      metadata: { nested: { value: "original" } }
+    });
+    audit.actor = "mutated";
+    audit.metadata.nested = { value: "mutated" };
+    store.listAuditLog()[0]!.metadata.nested = { value: "mutated-list" };
+
+    const stored = store.getWorkItem(openItem.id)!;
+    expect(stored.title).toBe("Pilot issue");
+    expect(stored.repository.fullName).toBe("org/repo");
+    expect(stored.sourceDeliveryIds).toEqual(["delivery-1"]);
+    expect(stored.analysis.recommendations).toHaveLength(0);
+    expect(stored.analysis.risk.factors).toHaveLength(0);
+    expect(store.listRepositories()[0]?.fullName).toBe("org/repo");
+    expect(store.listAuditLog()[0]).toMatchObject({
+      actor: "maintainer",
+      metadata: { nested: { value: "original" } }
+    });
+  });
 });
 
 function workItem(status: WorkItem["status"], deliveryId: string): WorkItem {
