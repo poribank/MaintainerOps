@@ -1,3 +1,6 @@
+import { chmod, mkdir, writeFile } from "node:fs/promises";
+import os from "node:os";
+import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { loadConfig } from "../src/config.js";
 import { SecurityScannerRunner } from "../src/services/scanners.js";
@@ -43,4 +46,47 @@ describe("SecurityScannerRunner", () => {
     expect(result.args).toContain("/tmp/maintainerops-root");
     await expect(runner.runOsvScanner("../")).rejects.toThrow("inside the MaintainerOps workspace");
   });
+
+  it("returns failed when a scanner command times out", async () => {
+    const command = await writeExecutable("sleep-scanner", "sleep 1\n");
+    const runner = new SecurityScannerRunner(
+      loadConfig({
+        NODE_ENV: "test",
+        SCORECARD_COMMAND: command,
+        SCANNER_TIMEOUT_MS: "10"
+      })
+    );
+
+    await expect(runner.runScorecard("org/repo")).resolves.toMatchObject({
+      scanner: "scorecard",
+      status: "failed",
+      command
+    });
+  });
+
+  it("keeps scanner JSON output when the command exits non-zero", async () => {
+    const command = await writeExecutable("json-scanner", "printf '{\"results\":[{\"id\":\"GHSA-demo\"}]}'\nexit 2\n");
+    const runner = new SecurityScannerRunner(
+      loadConfig({
+        NODE_ENV: "test",
+        OSV_SCANNER_COMMAND: command
+      })
+    );
+
+    await expect(runner.runOsvScanner(".")).resolves.toMatchObject({
+      scanner: "osv-scanner",
+      status: "completed",
+      command,
+      json: { results: [{ id: "GHSA-demo" }] }
+    });
+  });
 });
+
+async function writeExecutable(name: string, body: string): Promise<string> {
+  const directory = path.join(os.tmpdir(), `maintainerops-scanner-test-${process.pid}`);
+  await mkdir(directory, { recursive: true });
+  const filePath = path.join(directory, name);
+  await writeFile(filePath, `#!/usr/bin/env sh\n${body}`);
+  await chmod(filePath, 0o700);
+  return filePath;
+}
