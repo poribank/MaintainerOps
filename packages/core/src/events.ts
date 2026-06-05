@@ -184,10 +184,15 @@ function createSecurityWorkItem(
   actor: GitHubActorRef | undefined,
   now: string
 ): WorkItem {
-  const alert = asRecord(input.payload.alert) ?? asRecord(input.payload.security_advisory) ?? input.payload;
-  const title = readString(alert.title) ?? `${input.eventName.replaceAll("_", " ")} requires review`;
+  const alert = readSecurityPayload(input.payload);
+  const title = readSecurityTitle(input.eventName, alert);
   const severity = readSeverity(alert);
-  const alertId = readIdentifier(alert.number) ?? readIdentifier(alert.id) ?? input.deliveryId;
+  const alertId =
+    readIdentifier(alert.number) ??
+    readIdentifier(alert.id) ??
+    readIdentifier(alert.ghsa_id) ??
+    readIdentifier(alert.cve_id) ??
+    input.deliveryId;
 
   return createWorkItem({
     kind: "security",
@@ -195,7 +200,7 @@ function createSecurityWorkItem(
     actor,
     number: undefined,
     title,
-    url: readString(alert.html_url),
+    url: readString(alert.html_url) ?? readString(alert.url),
     externalId: `security:${repository.fullName}:${input.eventName}:${alertId}`,
     deliveryId: input.deliveryId,
     now,
@@ -224,6 +229,32 @@ function createSecurityWorkItem(
       ]
     }
   });
+}
+
+function readSecurityPayload(payload: Record<string, unknown>): Record<string, unknown> {
+  return (
+    asRecord(payload.alert) ??
+    asRecord(payload.repository_advisory) ??
+    asRecord(payload.security_advisory) ??
+    payload
+  );
+}
+
+function readSecurityTitle(eventName: string, alert: Record<string, unknown>): string {
+  const rule = asRecord(alert.rule);
+  const direct =
+    readString(alert.title) ??
+    readString(alert.summary) ??
+    readString(rule?.description) ??
+    readString(rule?.name);
+  if (direct) return direct;
+
+  const secretType = readString(alert.secret_type_display_name) ?? readString(alert.secret_type);
+  if (eventName === "secret_scanning_alert" && secretType) {
+    return `Secret scanning alert: ${secretType}`;
+  }
+
+  return `${eventName.replaceAll("_", " ")} requires review`;
 }
 
 function createWorkItem(input: {

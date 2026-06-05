@@ -207,6 +207,7 @@ describe("normalizeGitHubWebhook", () => {
     });
 
     expect(items[0]?.id).toBe("security:org/repo:code_scanning_alert:12");
+    expect(items[0]?.title).toBe("Hardcoded credential");
     expect(items[0]?.analysis.findings[0]?.severity).toBe("high");
   });
 
@@ -228,6 +229,50 @@ describe("normalizeGitHubWebhook", () => {
 
     expect(items[0]?.id).toBe("security:org/repo:dependabot_alert:13");
     expect(items[0]?.analysis.findings[0]?.severity).toBe("medium");
+  });
+
+  it("reads repository advisory payload fields for stable security work items", () => {
+    const items = normalizeGitHubWebhook({
+      eventName: "repository_advisory",
+      deliveryId: "delivery-repository-advisory",
+      payload: {
+        repository: repositoryPayload(),
+        repository_advisory: {
+          ghsa_id: "GHSA-abcd-1234-9876",
+          summary: "MaintainerOps demo advisory",
+          severity: "critical",
+          html_url: "https://github.com/org/repo/security/advisories/GHSA-abcd-1234-9876"
+        },
+        sender: { login: "maintainer", type: "User" }
+      }
+    });
+
+    expect(items[0]).toMatchObject({
+      id: "security:org/repo:repository_advisory:GHSA-abcd-1234-9876",
+      title: "MaintainerOps demo advisory",
+      url: "https://github.com/org/repo/security/advisories/GHSA-abcd-1234-9876"
+    });
+    expect(items[0]?.analysis.findings[0]?.severity).toBe("critical");
+  });
+
+  it("uses secret scanning secret type as a title fallback", () => {
+    const items = normalizeGitHubWebhook({
+      eventName: "secret_scanning_alert",
+      deliveryId: "delivery-secret-scanning-title",
+      payload: {
+        repository: repositoryPayload(),
+        alert: {
+          number: 21,
+          secret_type_display_name: "GitHub personal access token"
+        },
+        sender: { login: "github-security", type: "Bot" }
+      }
+    });
+
+    expect(items[0]).toMatchObject({
+      id: "security:org/repo:secret_scanning_alert:21",
+      title: "Secret scanning alert: GitHub personal access token"
+    });
   });
 });
 
