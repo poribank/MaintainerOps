@@ -1,0 +1,57 @@
+import { describe, expect, it } from "vitest";
+import { buildStats, scanSummary, type WorkItem } from "./App.js";
+
+describe("dashboard helpers", () => {
+  it("builds queue stats from work item risk and status", () => {
+    const stats = buildStats([
+      workItem({ id: "issue:org/repo:1", kind: "issue", status: "open", priority: "urgent" }),
+      workItem({ id: "pr:org/repo:2", kind: "pull_request", status: "triaged", priority: "normal" }),
+      workItem({ id: "security:org/repo:3", kind: "security", status: "open", priority: "high" }),
+      workItem({ id: "release:org/repo:v1", kind: "release", status: "resolved", priority: "low" })
+    ]);
+
+    expect(stats).toEqual({
+      open: 2,
+      urgent: 1,
+      security: 1,
+      repositories: 1
+    });
+  });
+
+  it("summarizes Scorecard and OSV scanner payloads", () => {
+    expect(scanSummary({ score: 7.2 })).toBe("Score 7.2");
+    expect(scanSummary({ results: [{ id: "GHSA-1" }, { id: "GHSA-2" }] })).toBe("2 result groups");
+    expect(scanSummary({ results: [] })).toBe("0 result groups");
+    expect(scanSummary({ unexpected: true })).toBe("Scanner completed with JSON output");
+  });
+});
+
+function workItem(input: {
+  id: string;
+  kind: WorkItem["kind"];
+  status: WorkItem["status"];
+  priority: WorkItem["analysis"]["risk"]["priority"];
+}): WorkItem {
+  return {
+    id: input.id,
+    kind: input.kind,
+    status: input.status,
+    repository: {
+      fullName: "org/repo",
+      private: false
+    },
+    title: input.id,
+    updatedAt: "2026-06-05T00:00:00.000Z",
+    labels: [],
+    analysis: {
+      summary: "Needs review.",
+      risk: {
+        value: input.priority === "urgent" ? 80 : input.priority === "high" ? 60 : 10,
+        priority: input.priority,
+        factors: []
+      },
+      findings: [],
+      recommendations: []
+    }
+  };
+}

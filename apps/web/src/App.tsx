@@ -34,7 +34,7 @@ interface Recommendation {
   requiresApproval: boolean;
 }
 
-interface WorkItem {
+export interface WorkItem {
   id: string;
   kind: WorkItemKind;
   status: string;
@@ -574,7 +574,7 @@ function KindIcon(props: { kind: WorkItemKind }) {
   }
 }
 
-function buildStats(items: WorkItem[]) {
+export function buildStats(items: WorkItem[]) {
   return {
     open: items.filter((item) => item.status === "open").length,
     urgent: items.filter((item) => item.analysis.risk.priority === "urgent").length,
@@ -583,7 +583,7 @@ function buildStats(items: WorkItem[]) {
   };
 }
 
-function scanSummary(json: unknown): string {
+export function scanSummary(json: unknown): string {
   if (!json || typeof json !== "object") {
     return "Scanner returned no JSON summary";
   }
