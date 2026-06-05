@@ -295,23 +295,28 @@ function createWorkItem(input: {
 function readRepository(payload: Record<string, unknown>): GitHubRepositoryRef | undefined {
   const repository = asRecord(payload.repository);
   const owner = asRecord(repository?.owner);
-  const fullName = readString(repository?.full_name);
+  const fullName = readTrimmedString(repository?.full_name);
 
   if (!repository || !owner || !fullName) {
     return undefined;
   }
 
-  const [ownerName, repoName] = fullName.split("/");
-  const name = readString(repository.name) ?? repoName;
+  const nameParts = fullName.split("/");
+  if (nameParts.length !== 2) {
+    return undefined;
+  }
 
-  if (!ownerName || !name) {
+  const [ownerName, repoName] = nameParts.map((part) => part.trim());
+  const name = readTrimmedString(repository.name) ?? repoName;
+
+  if (!ownerName || !repoName || !name) {
     return undefined;
   }
 
   const ref: GitHubRepositoryRef = {
-    owner: readString(owner.login) ?? ownerName,
+    owner: readTrimmedString(owner.login) ?? ownerName,
     name,
-    fullName,
+    fullName: `${ownerName}/${repoName}`,
     private: Boolean(repository.private)
   };
 
@@ -349,11 +354,19 @@ function readActor(value: unknown): GitHubActorRef | undefined {
 
 function readLabels(value: unknown): string[] {
   if (!Array.isArray(value)) return [];
-  return value.map((label) => readString(asRecord(label)?.name)).filter((label): label is string => Boolean(label));
+  return value
+    .map((label) => readTrimmedString(asRecord(label)?.name))
+    .filter((label): label is string => Boolean(label));
 }
 
 function readString(value: unknown): string | undefined {
   return typeof value === "string" && value.length > 0 ? value : undefined;
+}
+
+function readTrimmedString(value: unknown): string | undefined {
+  if (typeof value !== "string") return undefined;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : undefined;
 }
 
 function readNumber(value: unknown): number | undefined {
