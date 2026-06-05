@@ -72,6 +72,23 @@ This writes:
 
 Generated evidence files are gitignored by default. Review them before attaching to an application or issue.
 
+## Demo Smoke Test
+
+For a local end-to-end check, run the demo smoke script from a clean checkout:
+
+```sh
+node scripts/demo-smoke.mjs
+```
+
+The script builds the monorepo, starts the compiled API on an ephemeral local port, replays the bundled GitHub webhook fixtures, exports evidence into `evidence/demo-smoke-<timestamp>`, verifies that PR, issue, release, and security work items were created, and stops the server.
+
+Useful options:
+
+```sh
+node scripts/demo-smoke.mjs --port 3210 --out evidence/demo-smoke-manual
+node scripts/demo-smoke.mjs --skip-build
+```
+
 ## 4. Real Pilot Guidance
 
 For a real Codex for Open Source application, prefer evidence from a repository you own, maintain, or are authorized to administer. Demo fixtures are useful for reproducibility, but they do not prove real ecosystem usage.
