@@ -12,7 +12,7 @@ Verified on 2026-06-05:
 - Stars: 0
 - Forks: 0
 - Open issues: 0
-- License intent: Apache-2.0 in `package.json` and `LICENSE`
+- License: Apache-2.0, recognized by the GitHub license endpoint
 - Current stage: early public OSS pilot, not production adoption
 
 The repo already includes CI, CodeQL, package verification, release preflight, Scorecard workflow, security policy, governance notes, contribution guide, GitHub App setup docs, pilot plan, threat model, and evidence export docs.
@@ -39,7 +39,7 @@ Before submitting an application:
 - [x] Local checks pass with `npm run check`.
 - [x] Real GitHub App installation has been validated on `poribank/MaintainerOps`.
 - [x] Live webhook forwarding has returned HTTP 202 from `POST /webhooks/github`.
-- [ ] Confirm the GitHub UI recognizes the repository license after the next pushed metadata refresh.
+- [x] Confirm the GitHub license endpoint recognizes Apache-2.0.
 - [ ] Record current stars, forks, open issues, releases, and workflow status on the submission date.
 - [ ] Export fresh pilot evidence with `npm run evidence:export` after live webhook or fixture replay.
 - [ ] Add screenshots of the installed GitHub App, maintainer queue, scanner jobs, and audit log.
