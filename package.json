@@ -22,7 +22,8 @@
     "evidence:export": "node scripts/export-evidence.mjs",
     "github:token": "node scripts/github-app-token.mjs",
     "lint": "npm run lint --workspace @maintainerops/core && npm run build --workspace @maintainerops/core && npm run lint --workspace @maintainerops/server && npm run lint --workspace @maintainerops/web",
-    "test": "npm run test --workspace @maintainerops/core && npm run build --workspace @maintainerops/core && npm run test --workspace @maintainerops/server && npm run test --workspace @maintainerops/web",
+    "test": "npm run test:scripts && npm run test --workspace @maintainerops/core && npm run build --workspace @maintainerops/core && npm run test --workspace @maintainerops/server && npm run test --workspace @maintainerops/web",
+    "test:scripts": "vitest run scripts/*.test.mjs",
     "test:postgres": "npm run test:postgres --workspace @maintainerops/server",
     "typecheck": "npm run typecheck --workspace @maintainerops/core && npm run build --workspace @maintainerops/core && npm run typecheck --workspace @maintainerops/server && npm run typecheck --workspace @maintainerops/web",
     "check": "npm run typecheck && npm run lint && npm run test && npm run build"
