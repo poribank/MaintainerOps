@@ -38,11 +38,21 @@ export function registerApiRoutes(
     }
   }));
 
-  app.get("/api/queue", async (request) => {
+  app.get("/api/queue", async (request, reply) => {
     const query = request.query as Record<string, string | undefined>;
+    const kind = parseKind(query.kind);
+    const status = parseStatus(query.status);
+
+    if (query.kind && !kind) {
+      return reply.code(400).send({ error: "Invalid queue kind filter." });
+    }
+    if (query.status && !status) {
+      return reply.code(400).send({ error: "Invalid queue status filter." });
+    }
+
     const items = await store.listWorkItems({
-      kind: parseKind(query.kind),
-      status: parseStatus(query.status),
+      kind,
+      status,
       repository: query.repository
     });
 

@@ -17,6 +17,24 @@ describe("server", () => {
     expect(queue.json<{ total: number }>().total).toBeGreaterThan(0);
   });
 
+  it("rejects invalid queue filters", async () => {
+    const { app } = await createTestApp();
+
+    const invalidKind = await app.inject({ method: "GET", url: "/api/queue?kind=merge_request" });
+    expect(invalidKind.statusCode).toBe(400);
+    expect(invalidKind.json<{ error: string }>().error).toContain("kind");
+
+    const invalidStatus = await app.inject({ method: "GET", url: "/api/queue?status=done" });
+    expect(invalidStatus.statusCode).toBe(400);
+    expect(invalidStatus.json<{ error: string }>().error).toContain("status");
+
+    const valid = await app.inject({ method: "GET", url: "/api/queue?kind=issue&status=open" });
+    expect(valid.statusCode).toBe(200);
+    expect(valid.json<{ items: Array<{ kind: string; status: string }> }>().items).toEqual(
+      expect.arrayContaining([expect.objectContaining({ kind: "issue", status: "open" })])
+    );
+  });
+
   it("accepts signed GitHub webhooks once", async () => {
     const { app } = await createTestApp(false);
     const payload = JSON.stringify(issuePayload());
