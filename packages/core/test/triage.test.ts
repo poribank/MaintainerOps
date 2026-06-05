@@ -24,4 +24,13 @@ labels:
 
     expect(recommendations.flatMap((item) => item.labels ?? [])).not.toContain("security");
   });
+
+  it("recognizes credential disclosure reports as security-sensitive", () => {
+    const recommendations = recommendIssueLabels({
+      title: "Credential disclosure in debug logs",
+      body: "The logs include an access token and private key material."
+    });
+
+    expect(recommendations.flatMap((item) => item.labels ?? [])).toContain("security");
+  });
 });

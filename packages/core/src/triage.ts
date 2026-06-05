@@ -17,7 +17,8 @@ const LABEL_RULES: Array<{
   {
     label: "security",
     confidence: 0.9,
-    pattern: /\b(cve|vulnerability|exploit|secret|token leak|xss|rce|sql injection)\b/i,
+    pattern:
+      /\b(cve|vulnerability|exploit|secret|credential|access token|private key|token leak|xss|rce|sql injection)\b/i,
     description: "The issue appears to describe a security-sensitive problem."
   },
   {
