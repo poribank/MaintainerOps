@@ -24,9 +24,10 @@ Reports should include:
 
 - AI features are disabled by default.
 - Raw PR diffs and issue bodies are not persisted by default.
-- GitHub write actions require explicit approval or repository opt-in policy.
+- GitHub write actions are disabled by default and require an explicit non-dry-run API request.
 - Webhook signatures are verified when `GITHUB_WEBHOOK_SECRET` is configured.
 - All write actions are audit logged.
+- Example secrets such as `dev-secret` are for local fixture replay only and must be replaced for live pilots.
 
 Related security documentation:
 
