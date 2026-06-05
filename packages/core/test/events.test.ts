@@ -231,6 +231,26 @@ describe("normalizeGitHubWebhook", () => {
     expect(items[0]?.analysis.findings[0]?.severity).toBe("medium");
   });
 
+  it("reads dependabot advisory severity when vulnerability severity is absent", () => {
+    const items = normalizeGitHubWebhook({
+      eventName: "dependabot_alert",
+      deliveryId: "delivery-dependabot-advisory",
+      payload: {
+        repository: repositoryPayload(),
+        alert: {
+          number: 15,
+          security_advisory: {
+            severity: "low"
+          }
+        },
+        sender: { login: "github-security", type: "Bot" }
+      }
+    });
+
+    expect(items[0]?.id).toBe("security:org/repo:dependabot_alert:15");
+    expect(items[0]?.analysis.findings[0]?.severity).toBe("low");
+  });
+
   it("reads repository advisory payload fields for stable security work items", () => {
     const items = normalizeGitHubWebhook({
       eventName: "repository_advisory",

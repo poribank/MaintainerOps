@@ -376,7 +376,11 @@ function readSeverity(alert: Record<string, unknown>): "low" | "medium" | "high"
 
   const vulnerability = asRecord(alert.security_vulnerability);
   const vulnerabilitySeverity = normalizeSeverity(readString(vulnerability?.severity));
-  return vulnerabilitySeverity ?? "high";
+  if (vulnerabilitySeverity) return vulnerabilitySeverity;
+
+  const advisory = asRecord(alert.security_advisory);
+  const advisorySeverity = normalizeSeverity(readString(advisory?.severity));
+  return advisorySeverity ?? "high";
 }
 
 function normalizeSeverity(value: string | undefined): "low" | "medium" | "high" | "critical" | undefined {
