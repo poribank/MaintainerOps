@@ -1,4 +1,4 @@
-import type { Analysis, GitHubActorRef, GitHubRepositoryRef, WorkItem, WorkItemKind } from "./types.js";
+import type { Analysis, GitHubActorRef, GitHubRepositoryRef, WorkItem, WorkItemKind, WorkItemStatus } from "./types.js";
 import { scoreWorkItem } from "./scoring.js";
 import { recommendIssueLabels } from "./triage.js";
 
@@ -45,6 +45,7 @@ function normalizePullRequest(
   const number = readNumber(input.payload.number) ?? readNumber(pullRequest.number);
   const title = readString(pullRequest.title) ?? `Pull request #${number ?? "unknown"}`;
   const labels = readLabels(pullRequest.labels);
+  const status = statusFromGitHubState(readString(pullRequest.state), readString(input.payload.action));
   const analysis: Analysis = {
     summary: "Pull request needs maintainer review.",
     risk: scoreWorkItem({
@@ -76,6 +77,7 @@ function normalizePullRequest(
       externalId: `pull_request:${repository.fullName}:${number ?? readString(pullRequest.node_id) ?? input.deliveryId}`,
       deliveryId: input.deliveryId,
       now,
+      status,
       labels,
       analysis
     })
@@ -94,6 +96,7 @@ function normalizeIssue(
   const number = readNumber(issue.number);
   const title = readString(issue.title) ?? `Issue #${number ?? "unknown"}`;
   const labels = readLabels(issue.labels);
+  const status = statusFromGitHubState(readString(issue.state), readString(input.payload.action));
   const recommendations = recommendIssueLabels({
     title,
     body: readString(issue.body),
@@ -123,6 +126,7 @@ function normalizeIssue(
       externalId: `issue:${repository.fullName}:${number ?? readString(issue.node_id) ?? input.deliveryId}`,
       deliveryId: input.deliveryId,
       now,
+      status,
       labels,
       analysis
     })
@@ -139,6 +143,7 @@ function normalizeRelease(
   if (!release) return [];
 
   const title = readString(release.name) ?? readString(release.tag_name) ?? "Release";
+  const status = releaseStatusFromAction(readString(input.payload.action));
   const analysis: Analysis = {
     summary: "Release needs readiness validation.",
     risk: scoreWorkItem({ kind: "release", releaseImpact: true }),
@@ -166,6 +171,7 @@ function normalizeRelease(
       externalId: `release:${repository.fullName}:${readString(release.tag_name) ?? input.deliveryId}`,
       deliveryId: input.deliveryId,
       now,
+      status,
       labels: [],
       analysis
     })
@@ -230,13 +236,14 @@ function createWorkItem(input: {
   externalId: string;
   deliveryId: string;
   now: string;
+  status?: WorkItemStatus;
   labels: string[];
   analysis: Analysis;
 }): WorkItem {
   const item: WorkItem = {
     id: input.externalId,
     kind: input.kind,
-    status: "open",
+    status: input.status ?? "open",
     repository: input.repository,
     title: input.title,
     externalId: input.externalId,
@@ -285,6 +292,15 @@ function readRepository(payload: Record<string, unknown>): GitHubRepositoryRef |
   if (defaultBranch) ref.defaultBranch = defaultBranch;
 
   return ref;
+}
+
+function statusFromGitHubState(state: string | undefined, action: string | undefined): WorkItemStatus {
+  if (state === "closed" || action === "closed") return "resolved";
+  return "open";
+}
+
+function releaseStatusFromAction(action: string | undefined): WorkItemStatus {
+  return action === "deleted" || action === "unpublished" ? "resolved" : "open";
 }
 
 function readActor(value: unknown): GitHubActorRef | undefined {

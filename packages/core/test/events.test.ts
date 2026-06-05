@@ -32,6 +32,30 @@ describe("normalizeGitHubWebhook", () => {
     expect(items[0]?.analysis.recommendations.flatMap((item) => item.labels ?? [])).toContain("bug");
   });
 
+  it("marks closed issue events as resolved", () => {
+    const items = normalizeGitHubWebhook({
+      eventName: "issues",
+      deliveryId: "delivery-closed-issue",
+      payload: {
+        action: "closed",
+        repository: repositoryPayload(),
+        issue: {
+          number: 42,
+          state: "closed",
+          title: "Crash with token refresh",
+          html_url: "https://github.com/org/repo/issues/42",
+          labels: []
+        },
+        sender: { login: "maintainer" }
+      }
+    });
+
+    expect(items[0]).toMatchObject({
+      id: "issue:org/repo:42",
+      status: "resolved"
+    });
+  });
+
   it("normalizes pull request events with stable review recommendations", () => {
     const items = normalizeGitHubWebhook({
       eventName: "pull_request",
@@ -60,6 +84,31 @@ describe("normalizeGitHubWebhook", () => {
     expect(items[0]?.analysis.recommendations.map((item) => item.action)).toContain("write_check");
   });
 
+  it("marks closed pull request events as resolved", () => {
+    const items = normalizeGitHubWebhook({
+      eventName: "pull_request",
+      deliveryId: "delivery-closed-pr",
+      payload: {
+        action: "closed",
+        repository: repositoryPayload(),
+        number: 7,
+        pull_request: {
+          number: 7,
+          state: "closed",
+          title: "Update release workflow",
+          html_url: "https://github.com/org/repo/pull/7",
+          labels: []
+        },
+        sender: { login: "maintainer" }
+      }
+    });
+
+    expect(items[0]).toMatchObject({
+      id: "pull_request:org/repo:7",
+      status: "resolved"
+    });
+  });
+
   it("normalizes release events into release readiness work items", () => {
     const items = normalizeGitHubWebhook({
       eventName: "release",
@@ -82,6 +131,28 @@ describe("normalizeGitHubWebhook", () => {
       title: "v1.2.3"
     });
     expect(items[0]?.analysis.recommendations.map((item) => item.action)).toContain("review_required");
+  });
+
+  it("marks deleted release events as resolved", () => {
+    const items = normalizeGitHubWebhook({
+      eventName: "release",
+      deliveryId: "delivery-deleted-release",
+      payload: {
+        action: "deleted",
+        repository: repositoryPayload(),
+        release: {
+          tag_name: "v1.2.3",
+          name: "v1.2.3",
+          html_url: "https://github.com/org/repo/releases/tag/v1.2.3"
+        },
+        sender: { login: "maintainer" }
+      }
+    });
+
+    expect(items[0]).toMatchObject({
+      id: "release:org/repo:v1.2.3",
+      status: "resolved"
+    });
   });
 
   it("uses numeric security alert identifiers instead of delivery ids", () => {

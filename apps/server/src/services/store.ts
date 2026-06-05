@@ -67,11 +67,9 @@ export class InMemoryMaintainerStore implements MaintainerStore {
       const existing = this.workItems.get(item.id);
 
       if (existing) {
-        existing.updatedAt = item.updatedAt;
-        existing.analysis = item.analysis;
-        existing.labels = item.labels;
-        existing.sourceDeliveryIds = Array.from(new Set([...existing.sourceDeliveryIds, ...item.sourceDeliveryIds]));
-        storedItems.push(existing);
+        const merged = mergeIngestedWorkItem(existing, item);
+        this.workItems.set(item.id, merged);
+        storedItems.push(merged);
       } else {
         this.workItems.set(item.id, item);
         storedItems.push(item);
@@ -256,4 +254,19 @@ export class InMemoryMaintainerStore implements MaintainerStore {
 
     this.ingest("demo-seed", items);
   }
+}
+
+export function mergeIngestedWorkItem(existing: WorkItem, incoming: WorkItem): WorkItem {
+  return {
+    ...incoming,
+    createdAt: existing.createdAt,
+    status: nextIngestedStatus(existing.status, incoming.status),
+    sourceDeliveryIds: Array.from(new Set([...existing.sourceDeliveryIds, ...incoming.sourceDeliveryIds]))
+  };
+}
+
+function nextIngestedStatus(existing: WorkItemStatus, incoming: WorkItemStatus): WorkItemStatus {
+  if (incoming === "resolved") return "resolved";
+  if (existing === "resolved" && incoming === "open") return "open";
+  return existing;
 }

@@ -6,6 +6,7 @@ import {
   type WorkItem
 } from "@maintainerops/core";
 import type { ActionInput, IngestResult, MaintainerStore, QueueFilter } from "./store.js";
+import { mergeIngestedWorkItem } from "./store.js";
 
 export class PostgresMaintainerStore implements MaintainerStore {
   private readonly pool: Pool;
@@ -229,6 +230,12 @@ async function upsertRepository(client: PoolClient, repository: GitHubRepository
 }
 
 async function upsertWorkItem(client: PoolClient, item: WorkItem): Promise<void> {
+  const existing = await client.query("SELECT payload FROM work_items WHERE id = $1", [item.id]);
+  const itemToStore =
+    existing.rowCount && existing.rows[0]?.payload
+      ? mergeIngestedWorkItem(existing.rows[0].payload as WorkItem, item)
+      : item;
+
   await client.query(
     `INSERT INTO work_items (id, kind, status, repository_full_name, title, external_id, payload, created_at, updated_at)
      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
@@ -239,17 +246,17 @@ async function upsertWorkItem(client: PoolClient, item: WorkItem): Promise<void>
        title = EXCLUDED.title,
        external_id = EXCLUDED.external_id,
        payload = EXCLUDED.payload,
-       updated_at = EXCLUDED.updated_at`,
+      updated_at = EXCLUDED.updated_at`,
     [
-      item.id,
-      item.kind,
-      item.status,
-      item.repository.fullName,
-      item.title,
-      item.externalId,
-      item,
-      item.createdAt,
-      item.updatedAt
+      itemToStore.id,
+      itemToStore.kind,
+      itemToStore.status,
+      itemToStore.repository.fullName,
+      itemToStore.title,
+      itemToStore.externalId,
+      itemToStore,
+      itemToStore.createdAt,
+      itemToStore.updatedAt
     ]
   );
 }
