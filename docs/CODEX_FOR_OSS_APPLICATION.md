@@ -12,10 +12,11 @@ Verified on 2026-06-05:
 - Stars: 0
 - Forks: 0
 - Open issues: 0
+- Latest GitHub Release: `v0.2.3` with workspace tarballs, CycloneDX SBOM, and `SHA256SUMS`
 - License: Apache-2.0, recognized by the GitHub license endpoint
 - Current stage: early public OSS pilot, not production adoption
 
-The repo already includes CI, CodeQL, package verification, release preflight, Scorecard workflow, security policy, governance notes, contribution guide, GitHub App setup docs, pilot plan, threat model, and evidence export docs.
+The repo already includes CI, CodeQL, package verification, a GitHub Release with inspection assets, release preflight, Scorecard workflow, security policy, governance notes, contribution guide, GitHub App setup docs, pilot plan, threat model, and evidence export docs.
 
 ## Program Fit
 
@@ -40,7 +41,7 @@ Before submitting an application:
 - [x] Real GitHub App installation has been validated on `poribank/MaintainerOps`.
 - [x] Live webhook forwarding has returned HTTP 202 from `POST /webhooks/github`.
 - [x] Confirm the GitHub license endpoint recognizes Apache-2.0.
-- [ ] Record current stars, forks, open issues, releases, and workflow status on the submission date.
+- [x] Record current stars, forks, open issues, releases, and workflow status on the submission date.
 - [ ] Export fresh pilot evidence with `npm run evidence:export` after live webhook or fixture replay.
 - [ ] Add screenshots of the installed GitHub App, maintainer queue, scanner jobs, and audit log.
 - [ ] Confirm the OpenAI organization ID from the API dashboard. Do not commit it.

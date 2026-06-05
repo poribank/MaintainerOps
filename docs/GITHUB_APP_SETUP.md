@@ -25,7 +25,7 @@ Start with the least-privilege set:
 
 Optional modules may require additional permissions:
 
-- Contents write: release draft creation
+- Contents write: release draft creation, GitHub Release creation, and release asset uploads
 - Code scanning alerts read: CodeQL/security queue
 - Secret scanning alerts read: secret alert queue
 - Security events read: repository advisory queue

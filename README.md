@@ -227,3 +227,4 @@ Release tags and manual release preflight runs verify the same checks expected b
 - Docker image build
 
 The workflow uploads preflight artifacts for inspection. Publishing GitHub Releases, npm packages, or container images still requires an explicitly configured release credential and is not enabled by default.
+The public `v0.2.3` GitHub Release includes workspace tarballs, a CycloneDX SBOM, and `SHA256SUMS` for pilot inspection. npm package publishing and container registry publishing are still intentionally not configured by default.
