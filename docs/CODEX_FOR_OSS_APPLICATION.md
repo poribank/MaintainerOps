@@ -46,6 +46,16 @@ Before submitting an application:
 - [ ] Confirm the OpenAI organization ID from the API dashboard. Do not commit it.
 - [ ] Confirm the submitting account owns, maintains, or is authorized to administer the repository.
 
+To refresh the repository facts on the submission date:
+
+```sh
+npm run evidence:repo-snapshot -- --repository poribank/MaintainerOps --out evidence
+```
+
+The snapshot records GitHub repository metadata, open issue count excluding pull requests, recent releases, and recent workflow runs.
+Generated files are ignored by git; review them before attaching evidence to an application.
+If unauthenticated GitHub API rate limits are exhausted, set `GITHUB_AUTH_TOKEN` to a short-lived token before running the command.
+
 ## Form Field Drafts
 
 ### GitHub Repository URL

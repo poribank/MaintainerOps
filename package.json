@@ -20,6 +20,7 @@
     "worker": "npm run worker --workspace @maintainerops/server",
     "demo:replay": "node scripts/replay-webhook-fixtures.mjs",
     "evidence:export": "node scripts/export-evidence.mjs",
+    "evidence:repo-snapshot": "node scripts/export-repo-snapshot.mjs",
     "github:token": "node scripts/github-app-token.mjs",
     "lint": "npm run lint --workspace @maintainerops/core && npm run build --workspace @maintainerops/core && npm run lint --workspace @maintainerops/server && npm run lint --workspace @maintainerops/web",
     "test": "npm run test --workspace @maintainerops/core && npm run build --workspace @maintainerops/core && npm run test --workspace @maintainerops/server && npm run test --workspace @maintainerops/web",
