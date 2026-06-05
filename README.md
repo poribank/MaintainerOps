@@ -109,7 +109,16 @@ npx --yes smee-client --url "$WEBHOOK_PROXY_URL" --target http://localhost:3000/
 
 ## Configuration
 
-Copy `.env.example` to `.env` and fill the GitHub App values for a real installation. Repository policy lives in `.github/maintainerops.yml`.
+Use `.env.example` as the deployment variable checklist and fill the GitHub App values for a real installation. MaintainerOps does not auto-load `.env`; export variables in the shell, inject them through your process manager, or prefix the command that starts the API.
+
+```sh
+cp .env.example .env
+set -a
+source .env
+set +a
+```
+
+Repository policy lives in `.github/maintainerops.yml`.
 
 ```yaml
 version: 1
