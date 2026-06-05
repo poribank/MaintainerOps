@@ -1,4 +1,5 @@
 import { execFile } from "node:child_process";
+import { realpathSync } from "node:fs";
 import path from "node:path";
 import { promisify } from "node:util";
 import type { AppConfig } from "../config.js";
@@ -106,8 +107,19 @@ export function assertRepositoryFullName(value: string): void {
 }
 
 export function resolveSafePath(workspaceRoot: string, targetPath: string): string {
-  const base = path.resolve(workspaceRoot);
-  const resolved = path.resolve(base, targetPath || ".");
+  let base: string;
+  try {
+    base = realpathSync(path.resolve(workspaceRoot));
+  } catch {
+    throw new Error("OSV scan workspace root must exist.");
+  }
+  const candidate = path.resolve(base, targetPath || ".");
+  let resolved: string;
+  try {
+    resolved = realpathSync(candidate);
+  } catch {
+    throw new Error("OSV scan path must exist inside the MaintainerOps workspace.");
+  }
   if (resolved !== base && !resolved.startsWith(`${base}${path.sep}`)) {
     throw new Error("OSV scan path must be inside the MaintainerOps workspace.");
   }

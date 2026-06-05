@@ -1,9 +1,10 @@
-import { chmod, mkdir, writeFile } from "node:fs/promises";
+import { realpathSync } from "node:fs";
+import { chmod, mkdir, symlink, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { loadConfig } from "../src/config.js";
-import { SecurityScannerRunner } from "../src/services/scanners.js";
+import { resolveSafePath, SecurityScannerRunner } from "../src/services/scanners.js";
 
 describe("SecurityScannerRunner", () => {
   it("reports unavailable scanners without throwing", async () => {
@@ -33,18 +34,31 @@ describe("SecurityScannerRunner", () => {
   });
 
   it("resolves OSV scan paths from the configured workspace root", async () => {
+    const workspaceRoot = path.join(os.tmpdir(), `maintainerops-root-${process.pid}`);
+    await mkdir(workspaceRoot, { recursive: true });
     const runner = new SecurityScannerRunner(
       loadConfig({
         NODE_ENV: "test",
-        INIT_CWD: "/tmp/maintainerops-root",
+        INIT_CWD: workspaceRoot,
         OSV_SCANNER_COMMAND: "maintainerops-osv-not-installed"
       })
     );
 
     const result = await runner.runOsvScanner(".");
 
-    expect(result.args).toContain("/tmp/maintainerops-root");
+    expect(result.args).toContain(realpathSync(workspaceRoot));
     await expect(runner.runOsvScanner("../")).rejects.toThrow("inside the MaintainerOps workspace");
+  });
+
+  it("rejects symlinks that resolve outside the workspace root", async () => {
+    const directory = path.join(os.tmpdir(), `maintainerops-symlink-test-${process.pid}`);
+    const workspace = path.join(directory, "workspace");
+    const outside = path.join(directory, "outside");
+    await mkdir(workspace, { recursive: true });
+    await mkdir(outside, { recursive: true });
+    await symlink(outside, path.join(workspace, "external"), "dir");
+
+    expect(() => resolveSafePath(workspace, "external")).toThrow("inside the MaintainerOps workspace");
   });
 
   it("returns failed when a scanner command times out", async () => {
