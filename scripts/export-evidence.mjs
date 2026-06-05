@@ -69,17 +69,25 @@ function renderMarkdown(data) {
   ];
 
   for (const item of items.slice(0, 20)) {
-    lines.push(`- ${item.kind}: ${item.title} (${item.repository.fullName}) risk=${item.analysis.risk.value}`);
+    lines.push(
+      `- ${inlineMarkdown(item.kind)}: ${inlineMarkdown(item.title)} (${inlineMarkdown(
+        item.repository.fullName
+      )}) risk=${inlineMarkdown(item.analysis.risk.value)}`
+    );
   }
 
   lines.push("", "## Jobs", "");
   for (const job of jobs.slice(0, 20)) {
-    lines.push(`- ${job.type}: ${job.status} (${job.id})`);
+    lines.push(`- ${inlineMarkdown(job.type)}: ${inlineMarkdown(job.status)} (${inlineMarkdown(job.id)})`);
   }
 
   lines.push("", "## Audit", "");
   for (const entry of audit.slice(0, 20)) {
-    lines.push(`- ${entry.action}: ${entry.outcome} by ${entry.actor} on ${entry.repository}`);
+    lines.push(
+      `- ${inlineMarkdown(entry.action)}: ${inlineMarkdown(entry.outcome)} by ${inlineMarkdown(
+        entry.actor
+      )} on ${inlineMarkdown(entry.repository)}`
+    );
   }
 
   lines.push(
@@ -92,6 +100,10 @@ function renderMarkdown(data) {
   );
 
   return `${lines.join("\n")}\n`;
+}
+
+function inlineMarkdown(value) {
+  return String(value).replace(/\s+/g, " ").trim();
 }
 
 function parseArgs(argv) {
