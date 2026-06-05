@@ -3,5 +3,11 @@ dist
 coverage
 .git
 .env
+.env.*
 .DS_Store
 npm-debug.log*
+artifacts
+evidence
+tmp
+apps/*/dist
+packages/*/dist
