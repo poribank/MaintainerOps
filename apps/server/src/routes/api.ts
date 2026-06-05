@@ -38,11 +38,21 @@ export function registerApiRoutes(
     }
   }));
 
-  app.get("/api/queue", async (request) => {
+  app.get("/api/queue", async (request, reply) => {
     const query = request.query as Record<string, string | undefined>;
+    const kind = parseKind(query.kind);
+    const status = parseStatus(query.status);
+
+    if (query.kind && !kind) {
+      return reply.code(400).send({ error: `Invalid queue kind '${query.kind}'.` });
+    }
+    if (query.status && !status) {
+      return reply.code(400).send({ error: `Invalid queue status '${query.status}'.` });
+    }
+
     const items = await store.listWorkItems({
-      kind: parseKind(query.kind),
-      status: parseStatus(query.status),
+      kind,
+      status,
       repository: query.repository
     });
 
@@ -169,10 +179,25 @@ export function registerApiRoutes(
       return reply.code(404).send({ error: "Work item not found." });
     }
 
-    const kind = parseAiKind(readString(body.kind)) ?? defaultAiKind(item.kind);
+    const actor = readString(body.actor) ?? "local-admin";
+    const requestedKind = readString(body.kind);
+    const kind = requestedKind ? parseAiKind(requestedKind) : defaultAiKind(item.kind);
+    if (!kind) {
+      const reason = `Invalid AI assistance kind '${requestedKind}'.`;
+      await store.recordAction(item.id, {
+        actor,
+        action: "ai_assist",
+        dryRun: true,
+        outcome: "failed",
+        metadata: {
+          requestedKind,
+          reason
+        }
+      });
+      return reply.code(400).send({ error: reason });
+    }
     const includeRawContent = body.includeRawContent === true;
     const rawContent = readString(body.rawContent);
-    const actor = readString(body.actor) ?? "local-admin";
     const policySource = readString(body.policySource);
 
     if (includeRawContent) {
