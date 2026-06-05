@@ -63,16 +63,17 @@ export class InMemoryMaintainerStore implements MaintainerStore {
     const storedItems: WorkItem[] = [];
 
     for (const item of items) {
-      this.repositories.set(item.repository.fullName, item.repository);
-      const existing = this.workItems.get(item.id);
+      const incoming = cloneWorkItem(item);
+      this.repositories.set(incoming.repository.fullName, cloneRepository(incoming.repository));
+      const existing = this.workItems.get(incoming.id);
 
       if (existing) {
-        const merged = mergeIngestedWorkItem(existing, item);
-        this.workItems.set(item.id, merged);
-        storedItems.push(merged);
+        const merged = mergeIngestedWorkItem(existing, incoming);
+        this.workItems.set(incoming.id, merged);
+        storedItems.push(cloneWorkItem(merged));
       } else {
-        this.workItems.set(item.id, item);
-        storedItems.push(item);
+        this.workItems.set(incoming.id, incoming);
+        storedItems.push(cloneWorkItem(incoming));
       }
     }
 
@@ -88,15 +89,19 @@ export class InMemoryMaintainerStore implements MaintainerStore {
         const riskDelta = right.analysis.risk.value - left.analysis.risk.value;
         if (riskDelta !== 0) return riskDelta;
         return right.updatedAt.localeCompare(left.updatedAt);
-      });
+      })
+      .map(cloneWorkItem);
   }
 
   listRepositories(): GitHubRepositoryRef[] {
-    return Array.from(this.repositories.values()).sort((left, right) => left.fullName.localeCompare(right.fullName));
+    return Array.from(this.repositories.values())
+      .sort((left, right) => left.fullName.localeCompare(right.fullName))
+      .map(cloneRepository);
   }
 
   getWorkItem(id: string): WorkItem | undefined {
-    return this.workItems.get(id);
+    const item = this.workItems.get(id);
+    return item ? cloneWorkItem(item) : undefined;
   }
 
   recordAction(workItemId: string, input: ActionInput): AuditLogEntry {
@@ -117,18 +122,19 @@ export class InMemoryMaintainerStore implements MaintainerStore {
       githubRequestId: input.githubRequestId,
       metadata: input.metadata ?? {}
     });
-    this.auditLog.unshift(entry);
+    const storedEntry = cloneAuditLogEntry(entry);
+    this.auditLog.unshift(storedEntry);
 
     if (shouldApplyQueueStatusAction(input.action, dryRun, outcome)) {
       item.status = input.action === "resolve" ? "resolved" : "triaged";
       item.updatedAt = entry.occurredAt;
     }
 
-    return entry;
+    return cloneAuditLogEntry(storedEntry);
   }
 
   listAuditLog(): AuditLogEntry[] {
-    return [...this.auditLog];
+    return this.auditLog.map(cloneAuditLogEntry);
   }
 
   seedDemoData(now = new Date()): void {
@@ -275,4 +281,16 @@ function nextIngestedStatus(existing: WorkItemStatus, incoming: WorkItemStatus):
   if (incoming === "resolved") return "resolved";
   if (existing === "resolved" && incoming === "open") return "open";
   return existing;
+}
+
+function cloneWorkItem(item: WorkItem): WorkItem {
+  return structuredClone(item);
+}
+
+function cloneRepository(repository: GitHubRepositoryRef): GitHubRepositoryRef {
+  return structuredClone(repository);
+}
+
+function cloneAuditLogEntry(entry: AuditLogEntry): AuditLogEntry {
+  return structuredClone(entry);
 }
