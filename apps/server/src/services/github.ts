@@ -1,5 +1,4 @@
 import { App } from "@octokit/app";
-import type { Octokit } from "@octokit/rest";
 import type { Recommendation, WorkItem } from "@maintainerops/core";
 import type { AppConfig } from "../config.js";
 
@@ -29,6 +28,17 @@ export interface GitHubWriteClient {
     workItem: WorkItem,
     input: { tagName: string; name?: string | undefined; body?: string | undefined }
   ): Promise<GitHubWriteResult>;
+}
+
+interface InstallationOctokit {
+  request(route: string, parameters: Record<string, unknown>): Promise<{
+    headers: Record<string, string | number | undefined>;
+    data: unknown;
+  }>;
+}
+
+interface GitHubAppClient {
+  getInstallationOctokit(installationId: number): Promise<InstallationOctokit>;
 }
 
 export const MINIMUM_GITHUB_APP_PERMISSIONS = {
@@ -64,16 +74,16 @@ export function createGitHubWriteClient(config: AppConfig): GitHubWriteClient | 
 }
 
 export class OctokitGitHubWriteClient implements GitHubWriteClient {
-  private readonly app: App;
+  private readonly app: GitHubAppClient;
   private readonly apiVersion: string;
 
-  constructor(config: AppConfig) {
+  constructor(config: AppConfig, appClient?: GitHubAppClient) {
     if (!config.github.appId || !config.github.privateKey) {
       throw new Error("GitHub App id and private key are required for GitHub writes.");
     }
 
     this.apiVersion = config.github.apiVersion;
-    this.app = new App({
+    this.app = appClient ?? new App({
       appId: Number.parseInt(config.github.appId, 10),
       privateKey: config.github.privateKey
     });
@@ -93,10 +103,11 @@ export class OctokitGitHubWriteClient implements GitHubWriteClient {
       headers: this.headers()
     });
 
+    const data = response.data as { id: number };
     return {
       applied: true,
       githubRequestId: readRequestId(response.headers),
-      metadata: { checkRunId: response.data.id, conclusion: preview.conclusion }
+      metadata: { checkRunId: data.id, conclusion: preview.conclusion }
     };
   }
 
@@ -119,10 +130,11 @@ export class OctokitGitHubWriteClient implements GitHubWriteClient {
       headers: this.headers()
     });
 
+    const data = response.data as Array<{ name: string }>;
     return {
       applied: true,
       githubRequestId: readRequestId(response.headers),
-      metadata: { labels: response.data.map((label) => label.name) }
+      metadata: { labels: data.map((label) => label.name) }
     };
   }
 
@@ -143,10 +155,11 @@ export class OctokitGitHubWriteClient implements GitHubWriteClient {
       headers: this.headers()
     });
 
+    const data = response.data as { id: number; html_url: string };
     return {
       applied: true,
       githubRequestId: readRequestId(response.headers),
-      metadata: { commentId: response.data.id, commentUrl: response.data.html_url }
+      metadata: { commentId: data.id, commentUrl: data.html_url }
     };
   }
 
@@ -170,19 +183,20 @@ export class OctokitGitHubWriteClient implements GitHubWriteClient {
       headers: this.headers()
     });
 
+    const data = response.data as { id: number; html_url: string };
     return {
       applied: true,
       githubRequestId: readRequestId(response.headers),
-      metadata: { releaseId: response.data.id, releaseUrl: response.data.html_url }
+      metadata: { releaseId: data.id, releaseUrl: data.html_url }
     };
   }
 
-  private async getOctokit(workItem: WorkItem): Promise<InstanceType<typeof Octokit>> {
+  private async getOctokit(workItem: WorkItem): Promise<InstallationOctokit> {
     if (!workItem.repository.installationId) {
       throw new Error("GitHub installation id is required for write actions.");
     }
 
-    return this.app.getInstallationOctokit(workItem.repository.installationId) as Promise<InstanceType<typeof Octokit>>;
+    return this.app.getInstallationOctokit(workItem.repository.installationId);
   }
 
   private headers(): Record<string, string> {
