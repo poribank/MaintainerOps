@@ -30,6 +30,17 @@ export class ActionExecutor {
       };
     }
 
+    if (!isGitHubWriteAction(input.action)) {
+      return {
+        outcome: "failed",
+        dryRun: input.dryRun,
+        metadata: {
+          reason: `Unsupported write action '${input.action}'.`,
+          action: input.action
+        }
+      };
+    }
+
     if (input.dryRun) {
       return {
         outcome: "recorded",
@@ -103,6 +114,16 @@ export class ActionExecutor {
 
 function isLocalQueueAction(action: string): boolean {
   return action === "triage" || action === "resolve";
+}
+
+function isGitHubWriteAction(action: string): boolean {
+  return (
+    action === "write_check" ||
+    action === "add_label" ||
+    action === "write_pr_comment" ||
+    action === "write_issue_comment" ||
+    action === "create_release_draft"
+  );
 }
 
 function requireString(metadata: Record<string, unknown>, key: string): string {

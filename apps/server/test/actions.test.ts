@@ -28,6 +28,22 @@ describe("ActionExecutor", () => {
     expect(result.metadata.mode).toBe("local-queue");
   });
 
+  it("does not record unsupported dry-run actions", async () => {
+    const executor = new ActionExecutor();
+    const result = await executor.execute(workItem(), {
+      action: "merge",
+      dryRun: true,
+      metadata: {}
+    });
+
+    expect(result).toMatchObject({
+      outcome: "failed",
+      dryRun: true,
+      metadata: { action: "merge" }
+    });
+    expect(String(result.metadata.reason)).toContain("Unsupported write action");
+  });
+
   it("fails non-dry-run actions when GitHub writes are not configured", async () => {
     const executor = new ActionExecutor();
     const result = await executor.execute(workItem(), {
