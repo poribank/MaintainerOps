@@ -52,6 +52,41 @@ describe("ActionExecutor", () => {
     expect(result.githubRequestId).toBe("request-1");
     expect(result.metadata.labels).toEqual(["bug"]);
   });
+
+  it("fails GitHub write actions with invalid metadata before calling GitHub", async () => {
+    const executor = new ActionExecutor(fakeGitHub());
+
+    const labels = await executor.execute(workItem(), {
+      action: "add_label",
+      dryRun: false,
+      metadata: { labels: ["bug", ""] }
+    });
+    const check = await executor.execute(workItem(), {
+      action: "write_check",
+      dryRun: false,
+      metadata: {}
+    });
+    const unsupported = await executor.execute(workItem(), {
+      action: "merge",
+      dryRun: false,
+      metadata: {}
+    });
+
+    expect(labels).toMatchObject({
+      outcome: "failed",
+      metadata: { action: "add_label" }
+    });
+    expect(String(labels.metadata.reason)).toContain("labels");
+    expect(check).toMatchObject({
+      outcome: "failed",
+      metadata: { action: "write_check" }
+    });
+    expect(String(check.metadata.reason)).toContain("headSha");
+    expect(unsupported).toMatchObject({
+      outcome: "failed",
+      metadata: { action: "merge" }
+    });
+  });
 });
 
 function fakeGitHub(): GitHubWriteClient {
