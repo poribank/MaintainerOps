@@ -33,7 +33,7 @@ export interface GitHubWriteClient {
 
 export const MINIMUM_GITHUB_APP_PERMISSIONS = {
   metadata: "read",
-  contents: "read",
+  contents: "write",
   issues: "write",
   pull_requests: "write",
   checks: "write"

@@ -33,8 +33,7 @@ export function registerApiRoutes(
       rulesets: "read",
       code_scanning_alerts: "read",
       secret_scanning_alerts: "read",
-      security_events: "read",
-      contents: "write for release drafts only"
+      security_events: "read"
     }
   }));
 

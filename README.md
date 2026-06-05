@@ -93,6 +93,7 @@ GitHub writes require all of the following:
 
 - a GitHub App id and private key;
 - installation ids from real webhook events;
+- GitHub App repository permissions for Metadata read, Contents read/write, Issues read/write, Pull requests read/write, and Checks write;
 - `GITHUB_WRITES_ENABLED=true`;
 - an API action request with `dryRun:false`.
 
