@@ -61,7 +61,7 @@ The doctor command only reads installation and repository metadata. It does not 
 
 ## 3. Webhook Events
 
-Subscribe to:
+Subscribe manually to:
 
 - `issues`
 - `issue_comment`
@@ -71,6 +71,9 @@ Subscribe to:
 - `check_suite`
 - `workflow_run`
 - `release`
+
+GitHub delivers these installation lifecycle events to GitHub Apps by default, and they cannot be manually subscribed to:
+
 - `installation`
 - `installation_repositories`
 
@@ -80,6 +83,8 @@ Optional security events:
 - `code_scanning_alert`
 - `secret_scanning_alert`
 - `repository_advisory`
+
+When using the GitHub App manifest flow, do not include `installation` or `installation_repositories` in `default_events`. GitHub rejects manifests that list default-only installation events.
 
 ## 4. Local Dry-Run
 
