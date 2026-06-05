@@ -30,12 +30,25 @@ const SECURITY_PATH_PATTERNS = [
   /^docker-compose\.ya?ml$/
 ];
 
+const SECURITY_LABELS = new Set(["security", "vulnerability", "cve"]);
+const RELEASE_IMPACT_LABELS = new Set(["breaking-change", "breaking change", "semver-major", "release-impact"]);
+
 export function scoreWorkItem(input: RiskScoreInput): RiskScore {
   const factors: ScoreFactor[] = [];
+  const labels = new Set((input.labels ?? []).map(normalizeLabel));
+  const hasSecurityLabel = [...SECURITY_LABELS].some((label) => labels.has(label));
+  const hasReleaseImpactLabel = [...RELEASE_IMPACT_LABELS].some((label) => labels.has(label));
 
   addFactor(factors, input.kind === "security", "security-item", "Security signal", 35, "high");
   addFactor(factors, input.unresolvedAdvisory === true, "unresolved-advisory", "Unresolved advisory", 35, "critical");
-  addFactor(factors, input.releaseImpact === true, "release-impact", "Release-impacting change", 18, "medium");
+  addFactor(
+    factors,
+    input.releaseImpact === true || hasReleaseImpactLabel,
+    "release-impact",
+    "Release-impacting change",
+    18,
+    "medium"
+  );
   addFactor(factors, input.ciFailed === true, "ci-failed", "Failing required checks", 16, "medium");
   addFactor(factors, input.missingTests === true, "missing-tests", "Tests not detected", 12, "medium");
   addFactor(factors, input.newContributor === true, "new-contributor", "New contributor", 8, "low");
@@ -53,7 +66,7 @@ export function scoreWorkItem(input: RiskScoreInput): RiskScore {
   const sensitiveFiles = changedFiles.filter(isSecuritySensitivePath);
   addFactor(
     factors,
-    input.securitySensitive === true || sensitiveFiles.length > 0,
+    input.securitySensitive === true || hasSecurityLabel || sensitiveFiles.length > 0,
     "security-sensitive-files",
     "Security-sensitive files changed",
     Math.min(24, 8 + sensitiveFiles.length * 4),
@@ -73,6 +86,10 @@ export function scoreWorkItem(input: RiskScoreInput): RiskScore {
 
 export function isSecuritySensitivePath(path: string): boolean {
   return SECURITY_PATH_PATTERNS.some((pattern) => pattern.test(path));
+}
+
+function normalizeLabel(label: string): string {
+  return label.trim().toLowerCase();
 }
 
 function addFactor(

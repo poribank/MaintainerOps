@@ -81,6 +81,7 @@ describe("normalizeGitHubWebhook", () => {
       number: 7,
       labels: ["security"]
     });
+    expect(items[0]?.analysis.risk.factors.map((factor) => factor.id)).toContain("security-sensitive-files");
     expect(items[0]?.analysis.recommendations.map((item) => item.action)).toContain("write_check");
   });
 
