@@ -1,4 +1,4 @@
-import { chmod, mkdir, writeFile } from "node:fs/promises";
+import { chmod, mkdir, mkdtemp, symlink, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
@@ -45,6 +45,21 @@ describe("SecurityScannerRunner", () => {
 
     expect(result.args).toContain("/tmp/maintainerops-root");
     await expect(runner.runOsvScanner("../")).rejects.toThrow("inside the MaintainerOps workspace");
+  });
+
+  it("rejects OSV scan paths that escape through symlinks", async () => {
+    const workspace = await mkdtemp(path.join(os.tmpdir(), "maintainerops-workspace-"));
+    const outside = await mkdtemp(path.join(os.tmpdir(), "maintainerops-outside-"));
+    await symlink(outside, path.join(workspace, "outside-link"), "dir");
+    const runner = new SecurityScannerRunner(
+      loadConfig({
+        NODE_ENV: "test",
+        INIT_CWD: workspace,
+        OSV_SCANNER_COMMAND: "maintainerops-osv-not-installed"
+      })
+    );
+
+    await expect(runner.runOsvScanner("outside-link")).rejects.toThrow("inside the MaintainerOps workspace");
   });
 
   it("returns failed when a scanner command times out", async () => {
