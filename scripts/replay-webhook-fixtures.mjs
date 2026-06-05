@@ -12,7 +12,7 @@ const secret = args.secret ?? process.env.GITHUB_WEBHOOK_SECRET ?? "dev-secret";
 const selected = args.fixture ? [args.fixture] : await readManifestFixturePaths();
 
 for (const fixturePath of selected) {
-  const fullPath = path.isAbsolute(fixturePath) ? fixturePath : path.join(fixtureDir, fixturePath);
+  const fullPath = resolveFixturePath(fixturePath);
   const body = await readFile(fullPath, "utf8");
   const event = args.event ?? eventFromFixtureName(path.basename(fixturePath));
   const delivery = `${args.deliveryPrefix ?? "demo"}-${event}-${randomUUID()}`;
@@ -54,6 +54,15 @@ async function readManifestFixturePaths() {
     throw new Error("Invalid fixture manifest.");
   }
   return manifest.fixtures.map((fixture) => fixture.path);
+}
+
+function resolveFixturePath(fixturePath) {
+  const resolved = path.resolve(fixtureDir, fixturePath);
+  const relative = path.relative(fixtureDir, resolved);
+  if (relative.startsWith("..") || path.isAbsolute(relative)) {
+    throw new Error(`Fixture path must stay inside apps/server/fixtures/github: ${fixturePath}`);
+  }
+  return resolved;
 }
 
 function eventFromFixtureName(name) {
