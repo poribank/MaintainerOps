@@ -71,7 +71,12 @@ function parseArgs(argv) {
     if (!arg.startsWith("--")) {
       continue;
     }
-    const key = arg.slice(2);
+    const [rawKey, inlineValue] = arg.slice(2).split(/=(.*)/s, 2);
+    const key = camelCase(rawKey);
+    if (inlineValue !== undefined) {
+      parsed[key] = inlineValue;
+      continue;
+    }
     const value = argv[index + 1]?.startsWith("--") ? "true" : argv[index + 1] ?? "true";
     parsed[key] = value;
     if (value !== "true") {
@@ -79,6 +84,10 @@ function parseArgs(argv) {
     }
   }
   return parsed;
+}
+
+function camelCase(value) {
+  return value.replace(/-([a-z])/g, (_match, letter) => letter.toUpperCase());
 }
 
 function parseJson(value) {
