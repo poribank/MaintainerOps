@@ -15,6 +15,8 @@ import { assertRepositoryFullName, resolveSafePath, type SecurityScannerRunner }
 import type { JobQueue } from "../services/jobs.js";
 import type { AiAssistanceKind, MaintainerAiAssistant } from "../services/ai-assistant.js";
 
+const READINESS_CHECK_TIMEOUT_MS = 2000;
+
 export function registerApiRoutes(
   app: FastifyInstance,
   config: AppConfig,
@@ -430,13 +432,24 @@ async function runReadinessCheck(check: () => Promise<void> | void | undefined):
       error: string;
     }
 > {
+  let timeout: ReturnType<typeof setTimeout> | undefined;
   try {
-    await check();
+    await Promise.race([
+      Promise.resolve().then(check),
+      new Promise<never>((_resolve, reject) => {
+        timeout = setTimeout(
+          () => reject(new Error(`Readiness check timed out after ${READINESS_CHECK_TIMEOUT_MS}ms.`)),
+          READINESS_CHECK_TIMEOUT_MS
+        );
+      })
+    ]);
     return { ok: true };
   } catch (error) {
     return {
       ok: false,
       error: error instanceof Error ? error.message : "Readiness check failed."
     };
+  } finally {
+    if (timeout) clearTimeout(timeout);
   }
 }
