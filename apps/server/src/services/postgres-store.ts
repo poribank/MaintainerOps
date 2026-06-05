@@ -36,13 +36,14 @@ export class PostgresMaintainerStore implements MaintainerStore {
         return { accepted: false, items: [] };
       }
 
+      const storedItems: WorkItem[] = [];
       for (const item of items) {
         await upsertRepository(client, item.repository);
-        await upsertWorkItem(client, item);
+        storedItems.push(await upsertWorkItem(client, item));
       }
 
       await client.query("COMMIT");
-      return { accepted: true, items };
+      return { accepted: true, items: storedItems };
     } catch (error) {
       await client.query("ROLLBACK");
       throw error;
@@ -237,7 +238,7 @@ async function upsertRepository(client: PoolClient, repository: GitHubRepository
   );
 }
 
-async function upsertWorkItem(client: PoolClient, item: WorkItem): Promise<void> {
+async function upsertWorkItem(client: PoolClient, item: WorkItem): Promise<WorkItem> {
   const existing = await client.query("SELECT payload FROM work_items WHERE id = $1", [item.id]);
   const itemToStore =
     existing.rowCount && existing.rows[0]?.payload
@@ -267,6 +268,7 @@ async function upsertWorkItem(client: PoolClient, item: WorkItem): Promise<void>
       itemToStore.updatedAt
     ]
   );
+  return itemToStore;
 }
 
 async function updateWorkItemPayload(client: PoolClient, item: WorkItem): Promise<void> {

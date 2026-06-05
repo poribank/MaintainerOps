@@ -41,6 +41,25 @@ describePostgres("PostgresMaintainerStore", () => {
 
     expect((await store.getWorkItem(item.id))?.status).toBe("triaged");
   });
+
+  it("returns merged work items from repeated ingests", async () => {
+    const item = workItem("open", "delivery-1");
+    await store.ingest("delivery-1", [item], "issues");
+    await store.recordAction(item.id, {
+      actor: "maintainer",
+      action: "triage",
+      dryRun: false,
+      outcome: "applied"
+    });
+
+    const result = await store.ingest("delivery-2", [workItem("open", "delivery-2")], "issues");
+
+    expect(result.items[0]).toMatchObject({
+      id: item.id,
+      status: "triaged",
+      sourceDeliveryIds: ["delivery-1", "delivery-2"]
+    });
+  });
 });
 
 function workItem(status: WorkItem["status"], deliveryId: string): WorkItem {
