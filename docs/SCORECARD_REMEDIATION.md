@@ -59,6 +59,12 @@ Status: future code hardening.
 
 The highest-value targets are webhook payload normalization, policy parsing, CODEOWNERS parsing, and CLI/documentation parsing. Start with deterministic property-style tests in the existing Vitest suite before adding external fuzzing infrastructure.
 
+### Packaging
+
+Status: inconclusive in Scorecard.
+
+Scorecard currently reports `Packaging: -1` with `packaging workflow not detected`. MaintainerOps has npm workspace package preflight coverage, but public package publishing is intentionally not enabled yet. Revisit this after release ownership is finalized and decide whether to publish npm packages, container images, or both.
+
 ### CII Best Practices
 
 Status: external registration.
