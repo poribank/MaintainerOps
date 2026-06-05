@@ -28,4 +28,19 @@ describe("SecurityScannerRunner", () => {
     await expect(runner.runScorecard("bad repo")).rejects.toThrow("owner/name");
     await expect(runner.runOsvScanner("../")).rejects.toThrow("inside the MaintainerOps workspace");
   });
+
+  it("resolves OSV scan paths from the configured workspace root", async () => {
+    const runner = new SecurityScannerRunner(
+      loadConfig({
+        NODE_ENV: "test",
+        INIT_CWD: "/tmp/maintainerops-root",
+        OSV_SCANNER_COMMAND: "maintainerops-osv-not-installed"
+      })
+    );
+
+    const result = await runner.runOsvScanner(".");
+
+    expect(result.args).toContain("/tmp/maintainerops-root");
+    await expect(runner.runOsvScanner("../")).rejects.toThrow("inside the MaintainerOps workspace");
+  });
 });

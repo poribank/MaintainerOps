@@ -1,3 +1,5 @@
+import path from "node:path";
+
 export interface AppConfig {
   nodeEnv: string;
   host: string;
@@ -28,6 +30,7 @@ export interface AppConfig {
   scanners: {
     scorecardCommand: string;
     osvScannerCommand: string;
+    workspaceRoot: string;
     timeoutMs: number;
   };
   seedDemoData: boolean;
@@ -71,6 +74,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     scanners: {
       scorecardCommand: env.SCORECARD_COMMAND || "scorecard",
       osvScannerCommand: env.OSV_SCANNER_COMMAND || "osv-scanner",
+      workspaceRoot: path.resolve(env.SCANNER_WORKSPACE_ROOT || env.INIT_CWD || process.cwd()),
       timeoutMs: Number.parseInt(env.SCANNER_TIMEOUT_MS || "120000", 10)
     },
     seedDemoData: env.SEED_DEMO_DATA !== "false"

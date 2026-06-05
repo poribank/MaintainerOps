@@ -26,7 +26,7 @@ export class SecurityScannerRunner {
   }
 
   async runOsvScanner(targetPath: string): Promise<ScannerResult> {
-    const resolvedPath = resolveSafePath(targetPath);
+    const resolvedPath = resolveSafePath(this.config.scanners.workspaceRoot, targetPath);
     const args = ["scan", "source", "--format", "json", "-r", resolvedPath];
     return runJsonCommand("osv-scanner", this.config.scanners.osvScannerCommand, args, this.config.scanners.timeoutMs);
   }
@@ -105,8 +105,8 @@ function assertRepositoryFullName(value: string): void {
   }
 }
 
-function resolveSafePath(targetPath: string): string {
-  const base = process.cwd();
+function resolveSafePath(workspaceRoot: string, targetPath: string): string {
+  const base = path.resolve(workspaceRoot);
   const resolved = path.resolve(base, targetPath || ".");
   if (resolved !== base && !resolved.startsWith(`${base}${path.sep}`)) {
     throw new Error("OSV scan path must be inside the MaintainerOps workspace.");
