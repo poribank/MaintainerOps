@@ -8,5 +8,6 @@ coverage/
 npm-debug.log*
 .vite/
 tmp/
+artifacts/
 evidence/*
 !evidence/.gitkeep

@@ -1,0 +1,33 @@
+name: Package
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    name: Package
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - run: mkdir -p artifacts && npm pack --workspaces --pack-destination artifacts
+      - run: docker build --pull -t maintainerops:${{ github.sha }} .
+      - run: docker image inspect maintainerops:${{ github.sha }}
+      - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
+        with:
+          name: npm-workspace-tarballs
+          path: artifacts/*.tgz
+          if-no-files-found: error
