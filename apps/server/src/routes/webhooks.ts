@@ -38,5 +38,8 @@ export function registerWebhookRoutes(app: FastifyInstance, config: AppConfig, s
 }
 
 function readHeader(value: string | string[] | undefined): string | undefined {
-  return Array.isArray(value) ? value[0] : value;
+  const header = Array.isArray(value) ? (value.length === 1 ? value[0] : undefined) : value;
+  if (typeof header !== "string") return undefined;
+  const trimmed = header.trim();
+  return trimmed.length > 0 && !trimmed.includes(",") ? trimmed : undefined;
 }

@@ -69,6 +69,27 @@ describe("server", () => {
     expect(response.statusCode).toBe(401);
   });
 
+  it("rejects ambiguous duplicate GitHub webhook headers", async () => {
+    const { app } = await createTestApp(false);
+    const payload = JSON.stringify(issuePayload());
+    const signature = sign(payload, "test-secret");
+
+    const response = await app.inject({
+      method: "POST",
+      url: "/webhooks/github",
+      headers: {
+        "content-type": "application/json",
+        "x-github-event": ["issues", "pull_request"],
+        "x-github-delivery": "delivery-duplicate-header",
+        "x-hub-signature-256": signature
+      },
+      payload
+    });
+
+    expect(response.statusCode).toBe(400);
+    expect(response.json<{ error: string }>().error).toContain("Missing GitHub event or delivery header");
+  });
+
   it("rejects malformed JSON request bodies with a client error", async () => {
     const { app, store } = await createTestApp();
     const item = store.listWorkItems()[0];
