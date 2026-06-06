@@ -24,8 +24,11 @@ jobs:
       - run: npm run check
       - run: mkdir -p artifacts
       - run: npm pack --workspaces --pack-destination artifacts
+      - run: node scripts/verify-package-artifacts.mjs artifacts/*.tgz
       - run: npm sbom --workspaces --sbom-format cyclonedx --json > artifacts/maintainerops.cdx.json
       - run: docker build --pull -t maintainerops:${{ github.sha }} .
+      - run: docker image inspect maintainerops:${{ github.sha }} > artifacts/docker-image.json
+      - run: cd artifacts && sha256sum *.tgz *.json > SHA256SUMS.txt
       - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
         with:
           name: release-preflight-artifacts

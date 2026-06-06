@@ -47,4 +47,4 @@ This plan describes how to turn MaintainerOps from a local MVP into evidence for
 
 ## Release Preflight
 
-Before publishing a pilot milestone, run the `Release Preflight` workflow on the intended tag. It verifies the full check suite, npm workspace tarball creation, CycloneDX SBOM generation, and Docker image construction without publishing credentials.
+Before publishing a pilot milestone, run the `Release Preflight` workflow on the intended tag. It verifies the full check suite, npm workspace tarball creation, runtime artifact contents, CycloneDX SBOM generation, Docker image construction, Docker image metadata capture, and SHA-256 checksum generation without publishing credentials.
