@@ -32,4 +32,4 @@ For long-running scans, callers enqueue work through `POST /api/jobs/scans/score
 
 ## Supply-chain workflows
 
-CI runs the repository check suite on pushes and pull requests. CodeQL runs JavaScript/TypeScript analysis, Package verifies npm workspace tarballs and Docker image construction, Scorecard uploads SARIF security posture results, and Release Preflight verifies checks, tarballs, SBOM generation, and Docker build output for tags or manual release candidates.
+CI runs the repository check suite on pushes and pull requests. CodeQL runs JavaScript/TypeScript analysis, Package verifies npm workspace tarballs and Docker image construction, Scorecard uploads SARIF security posture results, and Release Preflight verifies checks, tarballs, SBOM generation, and Docker build output for tags or manual release candidates. GitHub Releases can attach the workspace tarballs, CycloneDX SBOM, and checksum manifest for pilot review; npm and container registry publishing remain separate opt-in release steps.

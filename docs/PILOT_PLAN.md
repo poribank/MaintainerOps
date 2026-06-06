@@ -2,6 +2,17 @@
 
 This plan describes how to turn MaintainerOps from a local MVP into evidence for a Codex for Open Source application or follow-up review.
 
+Detailed operating guides:
+
+- [Pilot runbook](PILOT_RUNBOOK.md)
+- [Pilot acceptance criteria](PILOT_ACCEPTANCE_CRITERIA.md)
+- [Demo runbook](DEMO_RUNBOOK.md)
+- [Observability](OBSERVABILITY.md)
+- [Persistence operations](PERSISTENCE_OPERATIONS.md)
+- [Incident response](INCIDENT_RESPONSE.md)
+- [Release runbook](RELEASE_RUNBOOK.md)
+- [OpenSSF Scorecard remediation](SCORECARD_REMEDIATION.md)
+
 ## Week 1: Public Repository Readiness
 
 - Publish the repository publicly.
@@ -47,4 +58,4 @@ This plan describes how to turn MaintainerOps from a local MVP into evidence for
 
 ## Release Preflight
 
-Before publishing a pilot milestone, run the `Release Preflight` workflow on the intended tag. It verifies the full check suite, npm workspace tarball creation, CycloneDX SBOM generation, and Docker image construction without publishing credentials.
+Before publishing a pilot milestone, run the `Release Preflight` workflow on the intended tag. It verifies the full check suite, npm workspace tarball creation, CycloneDX SBOM generation, and Docker image construction without publishing credentials. Use [RELEASE_RUNBOOK.md](RELEASE_RUNBOOK.md) for the pre-tag checklist and publishing boundary.
