@@ -61,15 +61,10 @@ The doctor command only reads installation and repository metadata. It does not 
 
 ## 3. Webhook Events
 
-Subscribe manually to:
+For the current MVP, subscribe manually only to events that the server ingests into the maintainer queue:
 
 - `issues`
-- `issue_comment`
 - `pull_request`
-- `pull_request_review`
-- `pull_request_review_comment`
-- `check_suite`
-- `workflow_run`
 - `release`
 
 GitHub delivers these installation lifecycle events to GitHub Apps by default, and they cannot be manually subscribed to:
@@ -83,6 +78,8 @@ Optional security events:
 - `code_scanning_alert`
 - `secret_scanning_alert`
 - `repository_advisory`
+
+Leave other events disabled until the server has a corresponding normalizer.
 
 When using the GitHub App manifest flow, do not include `installation` or `installation_repositories` in `default_events`. GitHub rejects manifests that list default-only installation events.
 
