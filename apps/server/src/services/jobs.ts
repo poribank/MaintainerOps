@@ -22,6 +22,7 @@ export interface MaintainerJob {
 }
 
 export interface JobQueue {
+  ready?(): Promise<void>;
   enqueue(type: MaintainerJobType, input: MaintainerJobInput): Promise<MaintainerJob>;
   get(id: string): Promise<MaintainerJob | undefined>;
   list(limit?: number): Promise<MaintainerJob[]>;
@@ -142,6 +143,11 @@ export class BullMqJobQueue implements JobQueue {
   async close(): Promise<void> {
     await this.worker?.close();
     await this.queue.close();
+  }
+
+  async ready(): Promise<void> {
+    await this.queue.waitUntilReady();
+    await this.worker?.waitUntilReady();
   }
 }
 

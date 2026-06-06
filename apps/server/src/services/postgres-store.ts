@@ -15,6 +15,10 @@ export class PostgresMaintainerStore implements MaintainerStore {
     this.pool = new Pool({ connectionString: databaseUrl });
   }
 
+  async ready(): Promise<void> {
+    await this.pool.query("SELECT 1");
+  }
+
   async hasDelivery(deliveryId: string): Promise<boolean> {
     const result = await this.pool.query("SELECT 1 FROM webhook_deliveries WHERE delivery_id = $1", [deliveryId]);
     return (result.rowCount ?? 0) > 0;
