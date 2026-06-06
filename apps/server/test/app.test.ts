@@ -213,6 +213,50 @@ describe("server", () => {
     expect(zero.json<{ items: unknown[] }>().items).toHaveLength(1);
   });
 
+  it("rejects invalid queue filters", async () => {
+    const { app } = await createTestApp();
+
+    const kind = await app.inject({ method: "GET", url: "/api/queue?kind=review" });
+    expect(kind.statusCode).toBe(400);
+    expect(kind.json<{ error: string }>().error).toContain("Invalid queue kind");
+
+    const status = await app.inject({ method: "GET", url: "/api/queue?status=done" });
+    expect(status.statusCode).toBe(400);
+    expect(status.json<{ error: string }>().error).toContain("Invalid queue status");
+
+    const valid = await app.inject({ method: "GET", url: "/api/queue?kind=issue&status=open" });
+    expect(valid.statusCode).toBe(200);
+    expect(valid.json<{ items: Array<{ kind: string; status: string }> }>().items).toEqual(
+      expect.arrayContaining([expect.objectContaining({ kind: "issue", status: "open" })])
+    );
+  });
+
+  it("audit logs invalid AI assistance kinds", async () => {
+    const { app, store } = await createTestApp();
+    const item = store.listWorkItems()[0];
+    expect(item).toBeDefined();
+
+    const response = await app.inject({
+      method: "POST",
+      url: `/api/work-items/${encodeURIComponent(item!.id)}/ai-assist`,
+      headers: { "content-type": "application/json" },
+      payload: JSON.stringify({ kind: "merge_plan" })
+    });
+
+    expect(response.statusCode).toBe(400);
+    expect(response.json<{ error: string }>().error).toContain("Invalid AI assistance kind");
+
+    const audit = await app.inject({ method: "GET", url: "/api/audit-log" });
+    const entries = audit.json<{
+      entries: Array<{ action: string; outcome: string; metadata: { requestedKind?: string } }>;
+    }>().entries;
+    expect(entries[0]).toMatchObject({
+      action: "ai_assist",
+      outcome: "failed",
+      metadata: { requestedKind: "merge_plan" }
+    });
+  });
+
   it("returns disabled AI assistance without external configuration", async () => {
     const { app, store } = await createTestApp();
     const item = store.listWorkItems()[0];
