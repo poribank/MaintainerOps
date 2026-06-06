@@ -43,7 +43,7 @@ export function registerApiRoutes(
     const items = await store.listWorkItems({
       kind: parseKind(query.kind),
       status: parseStatus(query.status),
-      repository: query.repository
+      repository: readTrimmedString(query.repository)
     });
 
     return { total: items.length, items };
@@ -66,8 +66,8 @@ export function registerApiRoutes(
   app.post("/api/work-items/:id/actions", async (request, reply) => {
     const params = request.params as { id: string };
     const body = parseJsonBody(request.body);
-    const action = readString(body.action);
-    const actor = readString(body.actor) ?? "local-admin";
+    const action = readTrimmedString(body.action);
+    const actor = readTrimmedString(body.actor) ?? "local-admin";
     const metadata = isRecord(body.metadata) ? body.metadata : {};
 
     if (!action) {
@@ -104,7 +104,7 @@ export function registerApiRoutes(
 
   app.post("/api/policies/validate", async (request, reply) => {
     const body = parseJsonBody(request.body);
-    const source = readString(body.source);
+    const source = readTrimmedString(body.source);
     if (!source) {
       return reply.code(400).send({ error: "Policy source is required." });
     }
@@ -169,11 +169,11 @@ export function registerApiRoutes(
       return reply.code(404).send({ error: "Work item not found." });
     }
 
-    const kind = parseAiKind(readString(body.kind)) ?? defaultAiKind(item.kind);
+    const kind = parseAiKind(readTrimmedString(body.kind)) ?? defaultAiKind(item.kind);
     const includeRawContent = body.includeRawContent === true;
     const rawContent = readString(body.rawContent);
-    const actor = readString(body.actor) ?? "local-admin";
-    const policySource = readString(body.policySource);
+    const actor = readTrimmedString(body.actor) ?? "local-admin";
+    const policySource = readTrimmedString(body.policySource);
 
     if (includeRawContent) {
       const policyResult = evaluateRawContentPolicy(policySource, config.ai.provider);
@@ -275,7 +275,7 @@ export function registerApiRoutes(
 
   app.post("/api/jobs/scans/osv", async (request, reply) => {
     const body = parseJsonBody(request.body);
-    const targetPath = readString(body.path) ?? ".";
+    const targetPath = readTrimmedString(body.path) ?? ".";
     try {
       resolveSafePath(config.scanners.workspaceRoot, targetPath);
     } catch (error) {
@@ -302,7 +302,7 @@ export function registerApiRoutes(
 
   app.post("/api/scans/osv", async (request, reply) => {
     const body = parseJsonBody(request.body);
-    const targetPath = readString(body.path) ?? ".";
+    const targetPath = readTrimmedString(body.path) ?? ".";
 
     try {
       return await scanners.runOsvScanner(targetPath);
@@ -316,24 +316,27 @@ async function resolveRepositoryInput(
   body: Record<string, unknown>,
   store: MaintainerStore
 ): Promise<string | undefined> {
-  const repository = readString(body.repository);
-  const workItemId = readString(body.workItemId);
+  const repository = readTrimmedString(body.repository);
+  const workItemId = readTrimmedString(body.workItemId);
   return repository ?? (workItemId ? (await store.getWorkItem(workItemId))?.repository.fullName : undefined);
 }
 
 function parseKind(value: string | undefined): WorkItemKind | undefined {
+  const normalized = value?.trim();
   const allowed: WorkItemKind[] = ["pull_request", "issue", "release", "security", "policy"];
-  return allowed.includes(value as WorkItemKind) ? (value as WorkItemKind) : undefined;
+  return allowed.includes(normalized as WorkItemKind) ? (normalized as WorkItemKind) : undefined;
 }
 
 function parseStatus(value: string | undefined): WorkItemStatus | undefined {
+  const normalized = value?.trim();
   const allowed: WorkItemStatus[] = ["open", "triaged", "snoozed", "resolved"];
-  return allowed.includes(value as WorkItemStatus) ? (value as WorkItemStatus) : undefined;
+  return allowed.includes(normalized as WorkItemStatus) ? (normalized as WorkItemStatus) : undefined;
 }
 
 function parseAiKind(value: string | undefined): AiAssistanceKind | undefined {
+  const normalized = value?.trim();
   const allowed: AiAssistanceKind[] = ["pr_review", "issue_triage", "release_readiness", "security_review"];
-  return allowed.includes(value as AiAssistanceKind) ? (value as AiAssistanceKind) : undefined;
+  return allowed.includes(normalized as AiAssistanceKind) ? (normalized as AiAssistanceKind) : undefined;
 }
 
 function defaultAiKind(kind: WorkItemKind): AiAssistanceKind {
@@ -402,9 +405,15 @@ function readString(value: unknown): string | undefined {
   return typeof value === "string" && value.length > 0 ? value : undefined;
 }
 
+function readTrimmedString(value: unknown): string | undefined {
+  if (typeof value !== "string") return undefined;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : undefined;
+}
+
 function parseJobListLimit(value: string | undefined): number {
-  if (!value) return 50;
-  const parsed = Number.parseInt(value, 10);
-  if (!Number.isFinite(parsed)) return 50;
+  const normalized = value?.trim();
+  if (!normalized || !/^\d+$/.test(normalized)) return 50;
+  const parsed = Number.parseInt(normalized, 10);
   return Math.min(Math.max(parsed, 1), 100);
 }

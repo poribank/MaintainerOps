@@ -32,6 +32,71 @@ describe("normalizeGitHubWebhook", () => {
     expect(items[0]?.analysis.recommendations.flatMap((item) => item.labels ?? [])).toContain("bug");
   });
 
+  it("rejects malformed repository full names", () => {
+    const extraSegmentItems = normalizeGitHubWebhook({
+      eventName: "issues",
+      deliveryId: "delivery-malformed-repository",
+      payload: {
+        repository: {
+          id: 1,
+          full_name: "org/repo/extra",
+          name: "repo",
+          private: false,
+          owner: { login: "org" }
+        },
+        issue: {
+          number: 42,
+          title: "Crash with token refresh",
+          html_url: "https://github.com/org/repo/issues/42",
+          labels: []
+        },
+        sender: { login: "reporter" }
+      }
+    });
+    const blankSegmentItems = normalizeGitHubWebhook({
+      eventName: "issues",
+      deliveryId: "delivery-blank-repository-name",
+      payload: {
+        repository: {
+          id: 1,
+          full_name: "org/",
+          name: "repo",
+          private: false,
+          owner: { login: "org" }
+        },
+        issue: {
+          number: 42,
+          title: "Crash with token refresh",
+          html_url: "https://github.com/org/repo/issues/42",
+          labels: []
+        },
+        sender: { login: "reporter" }
+      }
+    });
+
+    expect(extraSegmentItems).toEqual([]);
+    expect(blankSegmentItems).toEqual([]);
+  });
+
+  it("trims issue labels and ignores blank label names", () => {
+    const items = normalizeGitHubWebhook({
+      eventName: "issues",
+      deliveryId: "delivery-trimmed-labels",
+      payload: {
+        repository: repositoryPayload(),
+        issue: {
+          number: 43,
+          title: "Security report",
+          html_url: "https://github.com/org/repo/issues/43",
+          labels: [{ name: " security " }, { name: " " }, { name: "bug" }]
+        },
+        sender: { login: "reporter" }
+      }
+    });
+
+    expect(items[0]?.labels).toEqual(["security", "bug"]);
+  });
+
   it("marks closed issue events as resolved", () => {
     const items = normalizeGitHubWebhook({
       eventName: "issues",
