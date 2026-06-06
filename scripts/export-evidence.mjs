@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const args = parseArgs(process.argv.slice(2));
 const baseUrl = args.url ?? "http://localhost:3001";
+const adminToken = args.adminToken ?? args["admin-token"] ?? process.env.ADMIN_TOKEN;
 const outputDir = path.resolve(root, args.out ?? "evidence");
 const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
 const jsonPath = path.join(outputDir, `maintainerops-evidence-${timestamp}.json`);
@@ -28,7 +29,9 @@ await writeFile(markdownPath, renderMarkdown(evidence));
 console.log(JSON.stringify({ jsonPath, markdownPath }, null, 2));
 
 async function getJson(url) {
-  const response = await fetch(url);
+  const response = await fetch(url, {
+    headers: adminToken ? { authorization: `Bearer ${adminToken}` } : undefined
+  });
   const body = await response.text();
   if (!response.ok) {
     throw new Error(`${url} returned ${response.status}: ${body}`);

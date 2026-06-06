@@ -26,6 +26,7 @@ Reports should include:
 - Raw PR diffs and issue bodies are not persisted by default.
 - GitHub write actions require explicit approval or repository opt-in policy.
 - Webhook signatures are verified when `GITHUB_WEBHOOK_SECRET` is configured.
+- API routes can be protected with `ADMIN_TOKEN` Bearer authentication.
 - All write actions are audit logged.
 
 Related security documentation:

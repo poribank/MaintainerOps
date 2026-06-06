@@ -132,6 +132,7 @@ interface PilotMetrics {
 }
 
 const API_BASE = import.meta.env.VITE_API_BASE || "";
+const ADMIN_TOKEN = import.meta.env.VITE_ADMIN_TOKEN || "";
 const FILTERS: Array<{ kind: WorkItemKind | "all"; label: string }> = [
   { kind: "all", label: "All" },
   { kind: "pull_request", label: "PRs" },
@@ -165,25 +166,25 @@ export function App() {
     setError("");
 
     try {
-      const response = await fetch(`${API_BASE}/api/queue`);
+      const response = await fetch(`${API_BASE}/api/queue`, { headers: apiHeaders() });
       if (!response.ok) throw new Error(await readApiError(response, "Queue request failed"));
       const data = (await response.json()) as QueueResponse;
       setItems(data.items);
       setSelectedId((current) => current || data.items[0]?.id || "");
 
-      const auditResponse = await fetch(`${API_BASE}/api/audit-log`);
+      const auditResponse = await fetch(`${API_BASE}/api/audit-log`, { headers: apiHeaders() });
       if (auditResponse.ok) {
         const auditData = (await auditResponse.json()) as { entries: AuditEntry[] };
         setAudit(auditData.entries);
       }
 
-      const jobsResponse = await fetch(`${API_BASE}/api/jobs`);
+      const jobsResponse = await fetch(`${API_BASE}/api/jobs`, { headers: apiHeaders() });
       if (jobsResponse.ok) {
         const jobsData = (await jobsResponse.json()) as { items: MaintainerJob[] };
         setJobs(jobsData.items);
       }
 
-      const metricsResponse = await fetch(`${API_BASE}/api/pilot/metrics`);
+      const metricsResponse = await fetch(`${API_BASE}/api/pilot/metrics`, { headers: apiHeaders() });
       if (metricsResponse.ok) {
         setMetrics((await metricsResponse.json()) as PilotMetrics);
       }
@@ -199,7 +200,7 @@ export function App() {
 
     const response = await fetch(`${API_BASE}/api/work-items/${encodeURIComponent(selected.id)}/actions`, {
       method: "POST",
-      headers: { "content-type": "application/json" },
+      headers: apiHeaders({ "content-type": "application/json" }),
       body: JSON.stringify({ action, actor: "local-admin", dryRun: actionRequestDryRun(action) })
     });
 
@@ -218,7 +219,7 @@ export function App() {
 
     const response = await fetch(`${API_BASE}/api/scans/${kind}`, {
       method: "POST",
-      headers: { "content-type": "application/json" },
+      headers: apiHeaders({ "content-type": "application/json" }),
       body: JSON.stringify(kind === "scorecard" ? { repository: selected.repository.fullName } : { path: "." })
     });
 
@@ -237,7 +238,7 @@ export function App() {
 
     const response = await fetch(`${API_BASE}/api/jobs/scans/${kind}`, {
       method: "POST",
-      headers: { "content-type": "application/json" },
+      headers: apiHeaders({ "content-type": "application/json" }),
       body: JSON.stringify(kind === "scorecard" ? { repository: selected.repository.fullName } : { path: "." })
     });
 
@@ -256,7 +257,7 @@ export function App() {
 
     const response = await fetch(`${API_BASE}/api/work-items/${encodeURIComponent(selected.id)}/ai-assist`, {
       method: "POST",
-      headers: { "content-type": "application/json" },
+      headers: apiHeaders({ "content-type": "application/json" }),
       body: JSON.stringify({ includeRawContent: false })
     });
 
@@ -575,6 +576,10 @@ function KindIcon(props: { kind: WorkItemKind }) {
 
 export function actionRequestDryRun(action: string): boolean {
   return action !== "triage" && action !== "resolve";
+}
+
+export function apiHeaders(headers: Record<string, string> = {}): Record<string, string> {
+  return ADMIN_TOKEN ? { ...headers, authorization: `Bearer ${ADMIN_TOKEN}` } : headers;
 }
 
 export function buildStats(items: WorkItem[]) {
