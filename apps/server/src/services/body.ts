@@ -1,4 +1,10 @@
+import { Buffer } from "node:buffer";
+
 export function parseJsonBody(body: unknown): Record<string, unknown> {
+  if (Buffer.isBuffer(body)) {
+    return parseJsonBody(body.toString("utf8"));
+  }
+
   if (typeof body === "string") {
     let parsed: unknown;
     try {
@@ -16,6 +22,7 @@ export function parseJsonBody(body: unknown): Record<string, unknown> {
 
 export function readRawBody(body: unknown): string {
   if (typeof body === "string") return body;
+  if (Buffer.isBuffer(body)) return body.toString("utf8");
   return JSON.stringify(body ?? {});
 }
 
