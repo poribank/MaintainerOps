@@ -4,6 +4,11 @@ coverage
 .git
 .env
 .env.*
+.npmrc
+.npmrc.*
+*.key
+*.p8
+*.pem
 .DS_Store
 npm-debug.log*
 artifacts

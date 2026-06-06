@@ -4,6 +4,9 @@ coverage/
 .env
 .env.*
 !.env.example
+*.key
+*.p8
+*.pem
 .DS_Store
 npm-debug.log*
 .vite/
