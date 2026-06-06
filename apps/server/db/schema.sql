@@ -27,8 +27,8 @@ CREATE TABLE webhook_deliveries (
 
 CREATE TABLE work_items (
   id TEXT PRIMARY KEY,
-  kind TEXT NOT NULL,
-  status TEXT NOT NULL,
+  kind TEXT NOT NULL CHECK (kind IN ('pull_request', 'issue', 'release', 'security', 'policy')),
+  status TEXT NOT NULL CHECK (status IN ('open', 'triaged', 'snoozed', 'resolved')),
   repository_full_name TEXT NOT NULL REFERENCES repositories(full_name),
   title TEXT NOT NULL,
   external_id TEXT NOT NULL,
@@ -47,7 +47,7 @@ CREATE TABLE audit_log (
   delivery_id TEXT,
   dry_run BOOLEAN NOT NULL,
   github_request_id TEXT,
-  outcome TEXT NOT NULL,
+  outcome TEXT NOT NULL CHECK (outcome IN ('approved', 'rejected', 'applied', 'failed', 'recorded')),
   metadata JSONB NOT NULL DEFAULT '{}'::jsonb
 );
 

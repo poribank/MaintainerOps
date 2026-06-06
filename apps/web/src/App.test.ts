@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { actionRequestDryRun, buildStats, readApiError, scanSummary, type WorkItem } from "./App.js";
+import { actionRequestDryRun, apiHeaders, buildStats, readApiError, scanSummary, type WorkItem } from "./App.js";
 
 describe("dashboard helpers", () => {
   it("builds queue stats from work item risk and status", () => {
@@ -29,6 +29,10 @@ describe("dashboard helpers", () => {
     expect(actionRequestDryRun("triage")).toBe(false);
     expect(actionRequestDryRun("resolve")).toBe(false);
     expect(actionRequestDryRun("write_check")).toBe(true);
+  });
+
+  it("preserves headers when no admin token is configured", () => {
+    expect(apiHeaders({ "content-type": "application/json" })).toEqual({ "content-type": "application/json" });
   });
 
   it("reads API error payloads with a status fallback", async () => {

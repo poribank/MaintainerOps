@@ -5,6 +5,7 @@ export interface AppConfig {
   host: string;
   port: number;
   webOrigin: string;
+  adminToken?: string;
   github: {
     appId?: string;
     privateKey?: string;
@@ -62,7 +63,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
   if (env.OPENAI_API_KEY) ai.apiKey = env.OPENAI_API_KEY;
   if (env.DATABASE_URL) storage.databaseUrl = env.DATABASE_URL;
 
-  return {
+  const config: AppConfig = {
     nodeEnv: env.NODE_ENV || "development",
     host: env.HOST || "0.0.0.0",
     port: Number.parseInt(env.PORT || "3000", 10),
@@ -79,6 +80,9 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     },
     seedDemoData: env.SEED_DEMO_DATA !== "false"
   };
+
+  if (env.ADMIN_TOKEN) config.adminToken = env.ADMIN_TOKEN;
+  return config;
 }
 
 function parseAiProvider(value: string | undefined): AppConfig["ai"]["provider"] {
