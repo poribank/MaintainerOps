@@ -57,10 +57,15 @@ Optional security events:
 
 ```sh
 cp .env.example .env
+set -a
+source .env
+set +a
 npm install
 npm run check
 PORT=3000 npm run start --workspace @maintainerops/server
 ```
+
+The server reads environment variables from the process environment. It does not auto-load `.env` unless your shell, process manager, or deployment platform exports those values first.
 
 For local webhook testing, expose the API with a trusted tunnel and set the GitHub App webhook URL to the tunnel URL.
 For a stable no-account local pilot, a Smee channel is enough:

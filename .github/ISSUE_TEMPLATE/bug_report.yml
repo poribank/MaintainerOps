@@ -18,6 +18,19 @@ body:
       description: Include webhook payload shape, queue mode, store mode, and relevant logs when possible.
     validations:
       required: true
+  - type: dropdown
+    id: deployment-mode
+    attributes:
+      label: Deployment mode
+      description: Which runtime path showed the bug?
+      options:
+        - Local memory demo
+        - PostgreSQL and BullMQ pilot
+        - Docker Compose
+        - Live GitHub App webhook
+        - Other or unsure
+    validations:
+      required: true
   - type: input
     id: version
     attributes:
@@ -31,3 +44,8 @@ body:
       label: Expected behavior
     validations:
       required: true
+  - type: textarea
+    id: sanitized-evidence
+    attributes:
+      label: Sanitized logs or evidence
+      description: Include relevant logs, metrics, or evidence export snippets with tokens, private repository data, and raw issue or PR content removed.

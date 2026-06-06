@@ -23,6 +23,16 @@ Application materials:
 - [Evidence export](docs/EVIDENCE_EXPORT.md)
 - [Roadmap](ROADMAP.md)
 
+Project operations:
+
+- [Contributing](CONTRIBUTING.md)
+- [Code of Conduct](CODE_OF_CONDUCT.md)
+- [Support policy](SUPPORT.md)
+- [Maintainers](MAINTAINERS.md)
+- [Governance](GOVERNANCE.md)
+- [Repository settings](docs/REPOSITORY_SETTINGS.md)
+- [Pull request merge plan](docs/PR_MERGE_PLAN.md)
+
 ## MVP capabilities
 
 - GitHub App webhook ingest with signature verification and idempotency.
@@ -109,7 +119,16 @@ npx --yes smee-client --url "$WEBHOOK_PROXY_URL" --target http://localhost:3000/
 
 ## Configuration
 
-Copy `.env.example` to `.env` and fill the GitHub App values for a real installation. Repository policy lives in `.github/maintainerops.yml`.
+Use `.env.example` as the deployment variable checklist and fill the GitHub App values for a real installation. MaintainerOps does not auto-load `.env`; export variables in the shell, inject them through your process manager, or prefix the command that starts the API.
+
+```sh
+cp .env.example .env
+set -a
+source .env
+set +a
+```
+
+Repository policy lives in `.github/maintainerops.yml`.
 
 ```yaml
 version: 1
@@ -126,7 +145,7 @@ dataRetention:
 
 ## Security posture
 
-MaintainerOps uses least-privilege GitHub App permissions, stores only metadata by default, and records every write action in an audit log. See [SECURITY.md](SECURITY.md) and [docs/THREAT_MODEL.md](docs/THREAT_MODEL.md).
+MaintainerOps uses least-privilege GitHub App permissions, stores only metadata by default, and records every write action in an audit log. See [SECURITY.md](SECURITY.md), [docs/THREAT_MODEL.md](docs/THREAT_MODEL.md), and [docs/REPOSITORY_SETTINGS.md](docs/REPOSITORY_SETTINGS.md).
 
 ## Optional AI assistance
 

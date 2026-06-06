@@ -11,6 +11,21 @@ body:
       description: Describe the Scorecard, OSV, CODEOWNERS, release, advisory, ruleset, or scanner workflow.
     validations:
       required: true
+  - type: dropdown
+    id: signal-source
+    attributes:
+      label: Security signal source
+      options:
+        - OpenSSF Scorecard
+        - OSV Scanner
+        - CodeQL or code scanning
+        - Dependabot alert
+        - Secret scanning alert
+        - GitHub advisory or repository advisory
+        - Branch protection, ruleset, or CODEOWNERS
+        - Other
+    validations:
+      required: true
   - type: textarea
     id: authorization
     attributes:
@@ -24,3 +39,10 @@ body:
       label: Expected MaintainerOps behavior
     validations:
       required: true
+  - type: checkboxes
+    id: sensitive-data
+    attributes:
+      label: Sensitive data
+      options:
+        - label: I have removed secrets, private repository content, and raw vulnerability details that should be reported privately.
+          required: true
