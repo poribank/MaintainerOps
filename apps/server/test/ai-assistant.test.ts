@@ -90,10 +90,38 @@ describe("Maintainer AI assistant", () => {
     expect(input.rawContent).toContain("[REDACTED]");
     expect(input.rawContent).not.toContain("abcdefghijklmnopqrstuvwxyz123456");
     expect(input.rawContent).toHaveLength(32);
-    expect(input.safetyPolicy.rawContentWasRedacted).toBe(true);
+    expect(input.safetyPolicy).toMatchObject({
+      rawContentWasRedacted: true,
+      rawContentWasTruncated: true
+    });
     expect(result).toMatchObject({
       usedRawContent: true,
       redacted: true
+    });
+  });
+
+  it("does not mark unchanged raw repository content as redacted", async () => {
+    const fetchMock = stubOpenAi(outputTextResponse());
+    const assistant = new OpenAiMaintainerAssistant(
+      config({ provider: "openai", apiKey: "test-key", maxInputChars: 500 })
+    );
+    const rawContent = "diff --git a/file.ts b/file.ts\n+const safe = true;";
+
+    const result = await assistant.assist(workItem(), {
+      kind: "pr_review",
+      includeRawContent: true,
+      rawContent
+    });
+
+    const { input } = sentOpenAiRequest(fetchMock);
+    expect(input.rawContent).toBe(rawContent);
+    expect(input.safetyPolicy).toMatchObject({
+      rawContentWasRedacted: false,
+      rawContentWasTruncated: false
+    });
+    expect(result).toMatchObject({
+      usedRawContent: true,
+      redacted: false
     });
   });
 
@@ -220,6 +248,7 @@ interface AssistantInput {
     noAutoApproval: boolean;
     approvalRequiredForWrites: boolean;
     rawContentWasRedacted: boolean;
+    rawContentWasTruncated: boolean;
   };
 }
 
