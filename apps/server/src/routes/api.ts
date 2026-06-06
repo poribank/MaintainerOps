@@ -40,13 +40,15 @@ export function registerApiRoutes(
 
   app.get("/api/queue", async (request) => {
     const query = request.query as Record<string, string | undefined>;
-    const items = await store.listWorkItems({
+    const allItems = await store.listWorkItems({
       kind: parseKind(query.kind),
       status: parseStatus(query.status),
       repository: query.repository
     });
+    const limit = parseOptionalListLimit(query.limit);
+    const items = limit ? allItems.slice(0, limit) : allItems;
 
-    return { total: items.length, items };
+    return { total: allItems.length, count: items.length, limit, items };
   });
 
   app.get("/api/repositories", async () => ({
@@ -112,9 +114,13 @@ export function registerApiRoutes(
     return validatePolicy(source);
   });
 
-  app.get("/api/audit-log", async () => ({
-    entries: await store.listAuditLog()
-  }));
+  app.get("/api/audit-log", async (request) => {
+    const query = request.query as Record<string, string | undefined>;
+    const allEntries = await store.listAuditLog();
+    const limit = parseOptionalListLimit(query.limit);
+    const entries = limit ? allEntries.slice(0, limit) : allEntries;
+    return { total: allEntries.length, count: entries.length, limit, entries };
+  });
 
   app.get("/api/pilot/metrics", async () => {
     const items = await store.listWorkItems();
@@ -406,5 +412,12 @@ function parseJobListLimit(value: string | undefined): number {
   if (!value) return 50;
   const parsed = Number.parseInt(value, 10);
   if (!Number.isFinite(parsed)) return 50;
+  return Math.min(Math.max(parsed, 1), 100);
+}
+
+function parseOptionalListLimit(value: string | undefined): number | null {
+  if (!value) return null;
+  const parsed = Number.parseInt(value, 10);
+  if (!Number.isFinite(parsed)) return null;
   return Math.min(Math.max(parsed, 1), 100);
 }

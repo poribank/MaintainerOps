@@ -70,11 +70,22 @@ This writes:
 - `evidence/maintainerops-evidence-<timestamp>.json`
 - `evidence/maintainerops-evidence-<timestamp>.md`
 
+The export includes pilot metrics plus up to 100 queue items, jobs, and audit entries. Metrics remain the source of truth for full counts when a pilot instance has more activity than the evidence sample.
+
 Generated evidence files are gitignored by default. Review them before attaching to an application or issue.
 
 ## 4. Real Pilot Guidance
 
 For a real Codex for Open Source application, prefer evidence from a repository you own, maintain, or are authorized to administer. Demo fixtures are useful for reproducibility, but they do not prove real ecosystem usage.
+
+Capture current GitHub repository facts on the submission date:
+
+```sh
+npm run evidence:repo-snapshot -- --repository poribank/MaintainerOps --out evidence
+```
+
+This writes JSON and Markdown files with repository metadata, issue counts, release data, and recent workflow runs.
+If unauthenticated GitHub API rate limits are exhausted, set `GITHUB_AUTH_TOKEN` to a short-lived token before running the command.
 
 Capture real pilot evidence after following `docs/GITHUB_APP_SETUP.md`.
 When using Scorecard in a live pilot, start the API with `GITHUB_AUTH_TOKEN` set to a token that can read the pilot repository metadata:
