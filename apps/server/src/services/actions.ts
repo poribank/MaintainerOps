@@ -23,9 +23,9 @@ export class ActionExecutor {
         outcome: input.dryRun ? "recorded" : "applied",
         dryRun: input.dryRun,
         metadata: {
+          ...input.metadata,
           mode: "local-queue",
-          action: input.action,
-          ...input.metadata
+          action: input.action
         }
       };
     }
@@ -35,9 +35,9 @@ export class ActionExecutor {
         outcome: "recorded",
         dryRun: true,
         metadata: {
+          ...input.metadata,
           mode: "dry-run",
-          action: input.action,
-          ...input.metadata
+          action: input.action
         }
       };
     }

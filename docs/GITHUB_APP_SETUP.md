@@ -18,18 +18,19 @@ Recommended basic settings:
 Start with the least-privilege set:
 
 - Metadata: read
-- Contents: read
+- Contents: read/write
 - Issues: read/write
 - Pull requests: read/write
 - Checks: write
 
 Optional modules may require additional permissions:
 
-- Contents write: release draft creation
 - Code scanning alerts read: CodeQL/security queue
 - Secret scanning alerts read: secret alert queue
 - Security events read: repository advisory queue
 - Rulesets read: branch/ruleset policy checks
+
+`Contents: read/write` is required for the supported `create_release_draft` write action and for release asset publishing pilots. If you are running a read-only or dry-run-only pilot with release writes disabled, `Contents: read` is sufficient.
 
 ## 3. Webhook Events
 
