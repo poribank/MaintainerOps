@@ -51,6 +51,39 @@ describe("server", () => {
     expect(duplicate.json<{ duplicate: boolean }>().duplicate).toBe(true);
   });
 
+  it("accepts default GitHub App installation events without creating work items", async () => {
+    const { app } = await createTestApp(false);
+    const payload = JSON.stringify({
+      action: "created",
+      installation: { id: 99, account: { login: "org" } },
+      repositories: [{ id: 1, full_name: "org/repo", name: "repo", private: false }],
+      sender: { login: "maintainer" }
+    });
+    const signature = sign(payload, "test-secret");
+
+    const response = await app.inject({
+      method: "POST",
+      url: "/webhooks/github",
+      headers: {
+        "content-type": "application/json",
+        "x-github-event": "installation",
+        "x-github-delivery": "delivery-installation",
+        "x-hub-signature-256": signature
+      },
+      payload
+    });
+
+    expect(response.statusCode).toBe(202);
+    expect(response.json<{ accepted: boolean; count: number; items: unknown[] }>()).toMatchObject({
+      accepted: true,
+      count: 0,
+      items: []
+    });
+
+    const queue = await app.inject({ method: "GET", url: "/api/queue" });
+    expect(queue.json<{ total: number }>().total).toBe(0);
+  });
+
   it("rejects invalid webhook signatures", async () => {
     const { app } = await createTestApp(false);
 
