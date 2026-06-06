@@ -27,6 +27,9 @@ export function registerWebhookRoutes(app: FastifyInstance, config: AppConfig, s
     const payload = parseJsonBody(request.body);
     const items = normalizeGitHubWebhook({ eventName, deliveryId, payload });
     const result = await store.ingest(deliveryId, items, eventName);
+    if (!result.accepted) {
+      return reply.code(202).send({ accepted: false, duplicate: true, items: [] });
+    }
 
     return reply.code(202).send({
       accepted: result.accepted,
