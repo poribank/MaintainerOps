@@ -23,7 +23,7 @@ export function evaluateSecurityPosture(
   input: SecurityPostureInput,
   policy: MaintainerOpsPolicy = DEFAULT_POLICY
 ): SecurityPosture {
-  const files = new Set(input.files);
+  const files = new Set(input.files.map(normalizePath));
   const findings: Finding[] = [];
 
   if (policy.policy.requireSecurityMd && !hasFile(files, "SECURITY.md")) {
@@ -115,11 +115,15 @@ export function evaluateSecurityPosture(
 }
 
 function hasFile(files: Set<string>, path: string): boolean {
-  return files.has(path) || files.has(path.toLowerCase());
+  return files.has(normalizePath(path));
 }
 
 function hasAnyFile(files: Set<string>, paths: string[]): boolean {
   return paths.some((path) => hasFile(files, path));
+}
+
+function normalizePath(path: string): string {
+  return path.toLowerCase();
 }
 
 function addAlertFinding(

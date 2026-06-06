@@ -81,7 +81,29 @@ describe("normalizeGitHubWebhook", () => {
       number: 7,
       labels: ["security"]
     });
+    expect(items[0]?.analysis.risk.factors.map((factor) => factor.id)).toContain("security-sensitive-files");
     expect(items[0]?.analysis.recommendations.map((item) => item.action)).toContain("write_check");
+  });
+
+  it("treats first-timer pull requests as new contributor risk", () => {
+    const items = normalizeGitHubWebhook({
+      eventName: "pull_request",
+      deliveryId: "delivery-first-timer-pr",
+      payload: {
+        repository: repositoryPayload(),
+        number: 8,
+        pull_request: {
+          number: 8,
+          title: "Clarify setup docs",
+          html_url: "https://github.com/org/repo/pull/8",
+          author_association: "FIRST_TIMER",
+          labels: []
+        },
+        sender: { login: "new-user", type: "User" }
+      }
+    });
+
+    expect(items[0]?.analysis.risk.factors.map((factor) => factor.id)).toContain("new-contributor");
   });
 
   it("marks closed pull request events as resolved", () => {
@@ -211,6 +233,26 @@ describe("normalizeGitHubWebhook", () => {
     expect(items[0]?.analysis.findings[0]?.severity).toBe("high");
   });
 
+  it("maps code scanning rule severity levels without overstating low alerts", () => {
+    const items = normalizeGitHubWebhook({
+      eventName: "code_scanning_alert",
+      deliveryId: "delivery-code-scanning-note",
+      payload: {
+        repository: repositoryPayload(),
+        alert: {
+          number: 14,
+          rule: {
+            description: "Style-only static analysis finding",
+            severity: "note"
+          }
+        },
+        sender: { login: "github-security", type: "Bot" }
+      }
+    });
+
+    expect(items[0]?.analysis.findings[0]?.severity).toBe("low");
+  });
+
   it("preserves nested dependabot alert severity", () => {
     const items = normalizeGitHubWebhook({
       eventName: "dependabot_alert",
@@ -229,6 +271,26 @@ describe("normalizeGitHubWebhook", () => {
 
     expect(items[0]?.id).toBe("security:org/repo:dependabot_alert:13");
     expect(items[0]?.analysis.findings[0]?.severity).toBe("medium");
+  });
+
+  it("reads dependabot advisory severity when vulnerability severity is absent", () => {
+    const items = normalizeGitHubWebhook({
+      eventName: "dependabot_alert",
+      deliveryId: "delivery-dependabot-advisory",
+      payload: {
+        repository: repositoryPayload(),
+        alert: {
+          number: 15,
+          security_advisory: {
+            severity: "low"
+          }
+        },
+        sender: { login: "github-security", type: "Bot" }
+      }
+    });
+
+    expect(items[0]?.id).toBe("security:org/repo:dependabot_alert:15");
+    expect(items[0]?.analysis.findings[0]?.severity).toBe("low");
   });
 
   it("reads repository advisory payload fields for stable security work items", () => {

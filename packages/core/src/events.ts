@@ -51,7 +51,7 @@ function normalizePullRequest(
     risk: scoreWorkItem({
       kind: "pull_request",
       labels,
-      newContributor: readString(pullRequest.author_association) === "FIRST_TIME_CONTRIBUTOR"
+      newContributor: isNewContributorAssociation(readString(pullRequest.author_association))
     }),
     findings: [],
     recommendations: [
@@ -334,6 +334,10 @@ function releaseStatusFromAction(action: string | undefined): WorkItemStatus {
   return action === "deleted" || action === "unpublished" ? "resolved" : "open";
 }
 
+function isNewContributorAssociation(value: string | undefined): boolean {
+  return value === "FIRST_TIME_CONTRIBUTOR" || value === "FIRST_TIMER";
+}
+
 function readActor(value: unknown): GitHubActorRef | undefined {
   const actor = asRecord(value);
   const login = readString(actor?.login);
@@ -376,13 +380,21 @@ function readSeverity(alert: Record<string, unknown>): "low" | "medium" | "high"
 
   const vulnerability = asRecord(alert.security_vulnerability);
   const vulnerabilitySeverity = normalizeSeverity(readString(vulnerability?.severity));
-  return vulnerabilitySeverity ?? "high";
+  if (vulnerabilitySeverity) return vulnerabilitySeverity;
+
+  const advisory = asRecord(alert.security_advisory);
+  const advisorySeverity = normalizeSeverity(readString(advisory?.severity));
+  return advisorySeverity ?? "high";
 }
 
 function normalizeSeverity(value: string | undefined): "low" | "medium" | "high" | "critical" | undefined {
-  if (value === "low" || value === "medium" || value === "high" || value === "critical") {
-    return value;
+  const normalized = value?.trim().toLowerCase();
+  if (normalized === "low" || normalized === "medium" || normalized === "high" || normalized === "critical") {
+    return normalized;
   }
+  if (normalized === "error") return "high";
+  if (normalized === "warning") return "medium";
+  if (normalized === "note") return "low";
   return undefined;
 }
 
