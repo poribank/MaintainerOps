@@ -14,11 +14,12 @@ FROM node:24-bookworm-slim@sha256:242549cd46785b480c832479a730f4f2a20865d61ea2e4
 
 WORKDIR /app
 ENV NODE_ENV=production
-COPY --from=build /app/package.json /app/package.json
-COPY --from=build /app/package-lock.json* /app/
-COPY --from=build /app/node_modules /app/node_modules
-COPY --from=build /app/packages /app/packages
-COPY --from=build /app/apps /app/apps
+COPY --from=build --chown=node:node /app/package.json /app/package.json
+COPY --from=build --chown=node:node /app/package-lock.json* /app/
+COPY --from=build --chown=node:node /app/node_modules /app/node_modules
+COPY --from=build --chown=node:node /app/packages /app/packages
+COPY --from=build --chown=node:node /app/apps /app/apps
 
+USER node
 EXPOSE 3000 5173
 CMD ["npm", "run", "start", "--workspace", "@maintainerops/server"]

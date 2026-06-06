@@ -32,4 +32,4 @@ For long-running scans, callers enqueue work through `POST /api/jobs/scans/score
 
 ## Supply-chain workflows
 
-CI runs the repository check suite on pushes and pull requests. CodeQL runs JavaScript/TypeScript analysis, Package verifies npm workspace tarballs and Docker image construction, Scorecard uploads SARIF security posture results, and Release Preflight verifies checks, tarballs, SBOM generation, and Docker build output for tags or manual release candidates.
+CI runs the repository check suite on pushes and pull requests. CodeQL runs JavaScript/TypeScript analysis, Package verifies npm workspace tarballs and Docker image construction, Scorecard uploads SARIF security posture results, and Release Preflight verifies checks, tarballs, SBOM generation, and Docker build output for tags or manual release candidates. The runtime Docker image runs the Node.js server as the image's non-root `node` user.
