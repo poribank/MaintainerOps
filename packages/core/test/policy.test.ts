@@ -42,4 +42,18 @@ dataRetention:
     expect(result.valid).toBe(false);
     expect(result.errors.join(" ")).toContain("rawContentDays");
   });
+
+  it("rejects unknown nested policy keys", () => {
+    const result = validatePolicy(`
+version: 1
+automation:
+  applylabels: true
+policy:
+  requireSecurityMD: true
+`);
+
+    expect(result.valid).toBe(false);
+    expect(result.errors.join(" ")).toContain("automation");
+    expect(result.errors.join(" ")).toContain("policy");
+  });
 });
