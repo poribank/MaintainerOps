@@ -22,6 +22,19 @@ describe("dashboard helpers", () => {
     expect(scanSummary({ score: 7.2 })).toBe("Score 7.2");
     expect(scanSummary({ results: [{ id: "GHSA-1" }, { id: "GHSA-2" }] })).toBe("2 result groups");
     expect(scanSummary({ results: [] })).toBe("0 result groups");
+    expect(
+      scanSummary({
+        results: [
+          {
+            packages: [
+              { package: { name: "a" }, vulnerabilities: [{ id: "GHSA-1" }] },
+              { package: { name: "b" }, vulnerabilities: [{ id: "GHSA-2" }, { id: "GHSA-3" }] }
+            ]
+          }
+        ]
+      })
+    ).toBe("3 vulnerabilities across 1 result groups");
+    expect(scanSummary({ results: [{ vulnerabilities: [] }] })).toBe("0 vulnerabilities across 1 result groups");
     expect(scanSummary({ unexpected: true })).toBe("Scanner completed with JSON output");
   });
 

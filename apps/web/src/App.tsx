@@ -596,9 +596,40 @@ export function scanSummary(json: unknown): string {
     return `Score ${record.score}`;
   }
   if (Array.isArray(record.results)) {
+    const vulnerabilitySummary = summarizeVulnerabilities(record.results);
+    if (vulnerabilitySummary) {
+      return vulnerabilitySummary;
+    }
     return `${record.results.length} result groups`;
   }
   return "Scanner completed with JSON output";
+}
+
+function summarizeVulnerabilities(results: unknown[]): string | undefined {
+  let vulnerabilityCount = 0;
+  let inspectedVulnerabilityLists = 0;
+
+  for (const result of results) {
+    if (!result || typeof result !== "object") continue;
+    const record = result as Record<string, unknown>;
+    if (Array.isArray(record.vulnerabilities)) {
+      vulnerabilityCount += record.vulnerabilities.length;
+      inspectedVulnerabilityLists += 1;
+    }
+    if (Array.isArray(record.packages)) {
+      for (const packageResult of record.packages) {
+        if (!packageResult || typeof packageResult !== "object") continue;
+        const packageRecord = packageResult as Record<string, unknown>;
+        if (Array.isArray(packageRecord.vulnerabilities)) {
+          vulnerabilityCount += packageRecord.vulnerabilities.length;
+          inspectedVulnerabilityLists += 1;
+        }
+      }
+    }
+  }
+
+  if (inspectedVulnerabilityLists === 0) return undefined;
+  return `${vulnerabilityCount} vulnerabilities across ${results.length} result groups`;
 }
 
 export async function readApiError(response: Response, fallback: string): Promise<string> {
