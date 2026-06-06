@@ -1,17 +1,21 @@
 import { describe, expect, it } from "vitest";
-import { findUnownedFiles, parseCodeowners } from "../src/index.js";
+import { findUnownedFiles, matchesCodeownersPattern, parseCodeowners } from "../src/index.js";
 
 describe("CODEOWNERS", () => {
-  it("parses entries and reports invalid lines", () => {
+  it("parses entries, inline comments, and ownerless overrides", () => {
     const parsed = parseCodeowners(`
-*.ts @maintainers/typescript
+*.ts @maintainers/typescript # inline owner comment
 docs/
 !secret @maintainers/security
+src/* not-a-valid-owner
 `);
 
-    expect(parsed.entries).toHaveLength(3);
+    expect(parsed.entries).toEqual([
+      { pattern: "*.ts", owners: ["@maintainers/typescript"], line: 2 },
+      { pattern: "docs/", owners: [], line: 3 }
+    ]);
     expect(parsed.errors.map((error) => error.kind)).toEqual(
-      expect.arrayContaining(["missing_owner", "unsupported_negation"])
+      expect.arrayContaining(["unsupported_negation", "invalid_owner"])
     );
   });
 
@@ -24,5 +28,36 @@ src/** @maintainers/core
     expect(findUnownedFiles(["src/index.ts", ".github/workflows/release.yml", "README.md"], parsed.entries)).toEqual([
       "README.md"
     ]);
+  });
+
+  it("matches slashless patterns against file basenames in any directory", () => {
+    const parsed = parseCodeowners(`
+*.ts @maintainers/typescript
+`);
+
+    expect(matchesCodeownersPattern("*.ts", "src/index.ts")).toBe(true);
+    expect(findUnownedFiles(["src/index.ts", "packages/core/src/index.ts", "README.md"], parsed.entries)).toEqual([
+      "README.md"
+    ]);
+  });
+
+  it("matches common GitHub CODEOWNERS glob examples and last-match overrides", () => {
+    const parsed = parseCodeowners(`
+* @global-owner
+*.js @js-owner
+docs/* @docs-owner
+apps/ @apps-owner
+/build/logs/ @build-owner
+**/logs @logs-owner
+/apps/github
+`);
+
+    expect(findUnownedFiles(["src/index.js"], parsed.entries)).toEqual([]);
+    expect(findUnownedFiles(["docs/getting-started.md"], parsed.entries)).toEqual([]);
+    expect(findUnownedFiles(["docs/build-app/troubleshooting.md"], parsed.entries)).toEqual([]);
+    expect(findUnownedFiles(["services/apps/api.ts"], parsed.entries)).toEqual([]);
+    expect(findUnownedFiles(["build/logs/output.txt"], parsed.entries)).toEqual([]);
+    expect(findUnownedFiles(["scripts/logs/output.txt"], parsed.entries)).toEqual([]);
+    expect(findUnownedFiles(["apps/github/index.ts"], parsed.entries)).toEqual(["apps/github/index.ts"]);
   });
 });

@@ -34,4 +34,17 @@ describe("security posture", () => {
       ])
     );
   });
+
+  it("recognizes security metadata files regardless of path casing", () => {
+    const posture = evaluateSecurityPosture({
+      files: ["Security.md", ".github/codeowners"],
+      securityInsightsPresent: true,
+      rulesetsEnabled: true,
+      scorecardScore: 9
+    });
+
+    expect(posture.findings.map((finding) => finding.id)).not.toEqual(
+      expect.arrayContaining(["policy:security-md-missing", "policy:codeowners-missing"])
+    );
+  });
 });

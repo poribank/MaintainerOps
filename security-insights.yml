@@ -1,0 +1,69 @@
+header:
+  schema-version: 2.2.0
+  last-updated: '2026-06-06'
+  last-reviewed: '2026-06-06'
+  url: https://raw.githubusercontent.com/poribank/MaintainerOps/main/security-insights.yml
+  comment: |
+    MaintainerOps is published as a single-repository Security Insights file.
+    This metadata reflects the public repository state for the early OSS pilot.
+
+project:
+  name: MaintainerOps
+  homepage: https://github.com/poribank/MaintainerOps
+  roadmap: https://github.com/poribank/MaintainerOps/blob/main/ROADMAP.md
+  administrators:
+    - name: poribank
+      social: https://github.com/poribank
+      primary: true
+  repositories:
+    - name: MaintainerOps
+      url: https://github.com/poribank/MaintainerOps
+      comment: |
+        Main repository for the MaintainerOps GitHub App pilot, server, web
+        dashboard, core policy logic, documentation, and release assets.
+  vulnerability-reporting:
+    reports-accepted: true
+    bug-bounty-available: false
+    policy: https://github.com/poribank/MaintainerOps/security/policy
+    comment: |
+      Vulnerability reports are accepted through the repository security policy.
+      The project does not currently operate a paid bug bounty program.
+  documentation:
+    detailed-guide: https://github.com/poribank/MaintainerOps/blob/main/README.md
+    release-process: https://github.com/poribank/MaintainerOps/blob/main/docs/PILOT_PLAN.md
+    support-policy: https://github.com/poribank/MaintainerOps/blob/main/SECURITY.md
+
+repository:
+  url: https://github.com/poribank/MaintainerOps
+  status: active
+  accepts-change-request: true
+  accepts-automated-change-request: true
+  core-team:
+    - name: poribank
+      social: https://github.com/poribank
+      primary: true
+  license:
+    url: https://github.com/poribank/MaintainerOps/blob/main/LICENSE
+    expression: Apache-2.0
+  documentation:
+    contributing-guide: https://github.com/poribank/MaintainerOps/blob/main/CONTRIBUTING.md
+    governance: https://github.com/poribank/MaintainerOps/blob/main/GOVERNANCE.md
+    review-policy: https://github.com/poribank/MaintainerOps/blob/main/.github/CODEOWNERS
+    security-policy: https://github.com/poribank/MaintainerOps/blob/main/SECURITY.md
+  release:
+    automated-pipeline: true
+    distribution-points:
+      - uri: https://github.com/poribank/MaintainerOps/releases
+        comment: GitHub Releases publish release notes and downloadable assets.
+    changelog: https://github.com/poribank/MaintainerOps/releases/tag/{version}
+  security:
+    assessments:
+      self:
+        date: '2026-06-06'
+        name: Public pilot self-assessment
+        evidence: https://github.com/poribank/MaintainerOps/actions
+        comment: |
+          The repository has CI, CodeQL, package verification, release preflight,
+          Scorecard workflow, security policy, branch protection, fixture replay,
+          and evidence export support. No independent third-party assessment has
+          been published yet.

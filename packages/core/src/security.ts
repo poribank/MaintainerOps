@@ -23,10 +23,10 @@ export function evaluateSecurityPosture(
   input: SecurityPostureInput,
   policy: MaintainerOpsPolicy = DEFAULT_POLICY
 ): SecurityPosture {
-  const files = new Set(input.files);
+  const files = new Set(input.files.map(normalizeRepositoryPath));
   const findings: Finding[] = [];
 
-  if (policy.policy.requireSecurityMd && !hasFile(files, "SECURITY.md")) {
+  if (policy.policy.requireSecurityMd && !hasAnyFile(files, ["SECURITY.md", ".github/SECURITY.md", "docs/SECURITY.md"])) {
     findings.push({
       id: "policy:security-md-missing",
       title: "SECURITY.md missing",
@@ -115,7 +115,7 @@ export function evaluateSecurityPosture(
 }
 
 function hasFile(files: Set<string>, path: string): boolean {
-  return files.has(path) || files.has(path.toLowerCase());
+  return files.has(normalizeRepositoryPath(path));
 }
 
 function hasAnyFile(files: Set<string>, paths: string[]): boolean {
@@ -138,4 +138,8 @@ function addAlertFinding(
       description: `${count} active alerts need maintainer review.`
     });
   }
+}
+
+function normalizeRepositoryPath(path: string): string {
+  return path.replace(/^\/+/, "").toLowerCase();
 }
