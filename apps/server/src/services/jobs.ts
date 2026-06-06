@@ -50,7 +50,7 @@ export class MemoryJobQueue implements JobQueue {
       status: "queued",
       createdAt: now,
       updatedAt: now,
-      input
+      input: cloneJobInput(input)
     };
     this.jobs.set(job.id, job);
     queueMicrotask(() => {
@@ -169,9 +169,9 @@ async function mapBullMqJob(job: Job<MaintainerJobInput, ScannerResult, Maintain
     status: mapBullMqState(state),
     createdAt,
     updatedAt,
-    input: job.data
+    input: cloneJobInput(job.data)
   };
-  if (job.returnvalue) mapped.result = job.returnvalue;
+  if (job.returnvalue) mapped.result = structuredClone(job.returnvalue);
   if (job.failedReason) mapped.error = job.failedReason;
   return mapped;
 }
@@ -184,13 +184,11 @@ function mapBullMqState(state: string): MaintainerJobStatus {
 }
 
 function cloneJob(job: MaintainerJob): MaintainerJob {
-  const cloned: MaintainerJob = {
-    ...job,
-    input: { ...job.input }
-  };
-  if (job.result) cloned.result = { ...job.result };
-  if (job.error) cloned.error = job.error;
-  return cloned;
+  return structuredClone(job);
+}
+
+function cloneJobInput(input: MaintainerJobInput): MaintainerJobInput {
+  return structuredClone(input);
 }
 
 function normalizeJobListLimit(limit: number): number {
