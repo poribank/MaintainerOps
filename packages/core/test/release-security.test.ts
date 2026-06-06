@@ -14,6 +14,39 @@ describe("release readiness", () => {
       expect.arrayContaining(["release:unresolved-advisory", "release:missing-provenance"])
     );
   });
+
+  it("ignores blank release check and breaking change evidence", () => {
+    const readiness = calculateReleaseReadiness({
+      tagName: "v1.2.3",
+      failedRequiredChecks: ["", "  "],
+      breakingChangeCandidates: ["", "docs only  "],
+      hasProvenance: true
+    });
+
+    expect(readiness.ready).toBe(true);
+    expect(readiness.blockers.map((finding) => finding.id)).not.toContain("release:failed-required-checks");
+    expect(readiness.warnings).toEqual([
+      expect.objectContaining({
+        id: "release:breaking-change-candidates",
+        evidence: "docs only"
+      })
+    ]);
+  });
+
+  it("keeps non-blocking warnings reviewable", () => {
+    const readiness = calculateReleaseReadiness({
+      tagName: "v1.2.3",
+      hasProvenance: true,
+      missingChangelog: true
+    });
+
+    expect(readiness.ready).toBe(true);
+    expect(readiness.warnings.map((finding) => finding.id)).toContain("release:missing-changelog");
+    expect(readiness.recommendations[0]).toMatchObject({
+      id: "release:review-warnings",
+      action: "review_required"
+    });
+  });
 });
 
 describe("security posture", () => {
