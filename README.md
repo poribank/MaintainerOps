@@ -226,4 +226,4 @@ Release tags and manual release preflight runs verify the same checks expected b
 - CycloneDX SBOM generation with `npm sbom`
 - Docker image build
 
-The workflow uploads preflight artifacts for inspection. Publishing GitHub Releases, npm packages, or container images still requires an explicitly configured release credential and is not enabled by default.
+The workflow uploads preflight artifacts for inspection: npm workspace tarballs, a CycloneDX SBOM, Docker image metadata, and `SHA256SUMS.txt`. Publishing GitHub Releases, npm packages, or container images still requires an explicitly configured release credential and is not enabled by default.
