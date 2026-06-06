@@ -72,9 +72,10 @@ export class OctokitGitHubWriteClient implements GitHubWriteClient {
       throw new Error("GitHub App id and private key are required for GitHub writes.");
     }
 
+    const appId = parseGitHubAppId(config.github.appId);
     this.apiVersion = config.github.apiVersion;
     this.app = new App({
-      appId: Number.parseInt(config.github.appId, 10),
+      appId,
       privateKey: config.github.privateKey
     });
   }
@@ -201,4 +202,15 @@ function formatRecommendations(recommendations: Recommendation[]): string {
 function readRequestId(headers: Record<string, string | number | undefined>): string | undefined {
   const value = headers["x-github-request-id"];
   return typeof value === "string" ? value : undefined;
+}
+
+function parseGitHubAppId(value: string): number {
+  if (!/^\d+$/.test(value.trim())) {
+    throw new Error("GitHub App id must be a positive integer.");
+  }
+  const appId = Number.parseInt(value, 10);
+  if (!Number.isSafeInteger(appId) || appId <= 0) {
+    throw new Error("GitHub App id must be a positive integer.");
+  }
+  return appId;
 }

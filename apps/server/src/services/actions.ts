@@ -23,9 +23,9 @@ export class ActionExecutor {
         outcome: input.dryRun ? "recorded" : "applied",
         dryRun: input.dryRun,
         metadata: {
+          ...input.metadata,
           mode: "local-queue",
-          action: input.action,
-          ...input.metadata
+          action: input.action
         }
       };
     }
@@ -35,9 +35,9 @@ export class ActionExecutor {
         outcome: "recorded",
         dryRun: true,
         metadata: {
+          ...input.metadata,
           mode: "dry-run",
-          action: input.action,
-          ...input.metadata
+          action: input.action
         }
       };
     }
@@ -78,21 +78,27 @@ export class ActionExecutor {
     switch (input.action) {
       case "write_check":
         return this.github!.writeCheckRun(workItem, {
-          headSha: requireString(input.metadata, "headSha")
+          headSha: requireTrimmedString(input.metadata, "headSha")
         });
       case "add_label":
         return this.github!.addLabels(workItem, {
           labels: requireStringArray(input.metadata, "labels")
         });
       case "write_pr_comment":
+        requireWorkItemKind(workItem, input.action, "pull_request");
+        return this.github!.writeIssueComment(workItem, {
+          body: requireString(input.metadata, "body")
+        });
       case "write_issue_comment":
+        requireWorkItemKind(workItem, input.action, "issue");
         return this.github!.writeIssueComment(workItem, {
           body: requireString(input.metadata, "body")
         });
       case "create_release_draft":
+        requireWorkItemKind(workItem, input.action, "release");
         return this.github!.createReleaseDraft(workItem, {
-          tagName: requireString(input.metadata, "tagName"),
-          name: optionalString(input.metadata, "name"),
+          tagName: requireTrimmedString(input.metadata, "tagName"),
+          name: optionalTrimmedString(input.metadata, "name"),
           body: optionalString(input.metadata, "body")
         });
       default:
@@ -105,6 +111,12 @@ function isLocalQueueAction(action: string): boolean {
   return action === "triage" || action === "resolve";
 }
 
+function requireWorkItemKind(workItem: WorkItem, action: string, kind: WorkItem["kind"]): void {
+  if (workItem.kind !== kind) {
+    throw new Error(`Action '${action}' requires a ${kind} work item.`);
+  }
+}
+
 function requireString(metadata: Record<string, unknown>, key: string): string {
   const value = metadata[key];
   if (typeof value !== "string" || value.trim().length === 0) {
@@ -113,18 +125,29 @@ function requireString(metadata: Record<string, unknown>, key: string): string {
   return value;
 }
 
+function requireTrimmedString(metadata: Record<string, unknown>, key: string): string {
+  return requireString(metadata, key).trim();
+}
+
 function optionalString(metadata: Record<string, unknown>, key: string): string | undefined {
   const value = metadata[key];
   return typeof value === "string" && value.length > 0 ? value : undefined;
 }
 
+function optionalTrimmedString(metadata: Record<string, unknown>, key: string): string | undefined {
+  const value = metadata[key];
+  if (typeof value !== "string") return undefined;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : undefined;
+}
+
 function requireStringArray(metadata: Record<string, unknown>, key: string): string[] {
   const value = metadata[key];
-  if (!Array.isArray(value) || value.some((entry) => typeof entry !== "string" || entry.length === 0)) {
+  if (!Array.isArray(value) || value.some((entry) => typeof entry !== "string" || entry.trim().length === 0)) {
     throw new Error(`Action metadata '${key}' must be a non-empty string array.`);
   }
   if (value.length === 0) {
     throw new Error(`Action metadata '${key}' must include at least one value.`);
   }
-  return value;
+  return value.map((entry) => entry.trim());
 }
