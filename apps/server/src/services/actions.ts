@@ -30,6 +30,17 @@ export class ActionExecutor {
       };
     }
 
+    if (!isGitHubWriteAction(input.action)) {
+      return {
+        outcome: "failed",
+        dryRun: input.dryRun,
+        metadata: {
+          reason: `Unsupported write action '${input.action}'.`,
+          action: input.action
+        }
+      };
+    }
+
     if (input.dryRun) {
       return {
         outcome: "recorded",
@@ -78,7 +89,7 @@ export class ActionExecutor {
     switch (input.action) {
       case "write_check":
         return this.github!.writeCheckRun(workItem, {
-          headSha: requireTrimmedString(input.metadata, "headSha")
+          headSha: requireGitCommitSha(input.metadata, "headSha")
         });
       case "add_label":
         return this.github!.addLabels(workItem, {
@@ -111,6 +122,16 @@ function isLocalQueueAction(action: string): boolean {
   return action === "triage" || action === "resolve";
 }
 
+function isGitHubWriteAction(action: string): boolean {
+  return (
+    action === "write_check" ||
+    action === "add_label" ||
+    action === "write_pr_comment" ||
+    action === "write_issue_comment" ||
+    action === "create_release_draft"
+  );
+}
+
 function requireWorkItemKind(workItem: WorkItem, action: string, kind: WorkItem["kind"]): void {
   if (workItem.kind !== kind) {
     throw new Error(`Action '${action}' requires a ${kind} work item.`);
@@ -127,6 +148,14 @@ function requireString(metadata: Record<string, unknown>, key: string): string {
 
 function requireTrimmedString(metadata: Record<string, unknown>, key: string): string {
   return requireString(metadata, key).trim();
+}
+
+function requireGitCommitSha(metadata: Record<string, unknown>, key: string): string {
+  const value = requireTrimmedString(metadata, key);
+  if (!/^(?:[0-9a-f]{40}|[0-9a-f]{64})$/i.test(value)) {
+    throw new Error(`Action metadata '${key}' must be a git commit SHA.`);
+  }
+  return value;
 }
 
 function optionalString(metadata: Record<string, unknown>, key: string): string | undefined {

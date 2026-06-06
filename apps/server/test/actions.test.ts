@@ -9,7 +9,7 @@ describe("ActionExecutor", () => {
     const result = await executor.execute(workItem(), {
       action: "write_check",
       dryRun: true,
-      metadata: { headSha: "abc123" }
+      metadata: { headSha: gitSha() }
     });
 
     expect(result.outcome).toBe("recorded");
@@ -33,7 +33,7 @@ describe("ActionExecutor", () => {
     const dryRun = await executor.execute(workItem(), {
       action: "write_check",
       dryRun: true,
-      metadata: { action: "merge", mode: "applied", headSha: "abc123" }
+      metadata: { action: "merge", mode: "applied", headSha: gitSha() }
     });
     const local = await executor.execute(workItem(), {
       action: "triage",
@@ -44,7 +44,7 @@ describe("ActionExecutor", () => {
     expect(dryRun.metadata).toMatchObject({
       action: "write_check",
       mode: "dry-run",
-      headSha: "abc123"
+      headSha: gitSha()
     });
     expect(local.metadata).toMatchObject({
       action: "triage",
@@ -57,11 +57,27 @@ describe("ActionExecutor", () => {
     const result = await executor.execute(workItem(), {
       action: "write_check",
       dryRun: false,
-      metadata: { headSha: "abc123" }
+      metadata: { headSha: gitSha() }
     });
 
     expect(result.outcome).toBe("failed");
     expect(result.metadata.reason).toContain("GitHub writes are disabled");
+  });
+
+  it("does not record unsupported dry-run actions", async () => {
+    const executor = new ActionExecutor();
+    const result = await executor.execute(workItem(), {
+      action: "merge",
+      dryRun: true,
+      metadata: {}
+    });
+
+    expect(result).toMatchObject({
+      outcome: "failed",
+      dryRun: true,
+      metadata: { action: "merge" }
+    });
+    expect(String(result.metadata.reason)).toContain("Unsupported write action");
   });
 
   it("applies supported GitHub actions through the write client", async () => {
@@ -171,6 +187,11 @@ describe("ActionExecutor", () => {
       dryRun: false,
       metadata: {}
     });
+    const malformedCheck = await executor.execute(workItem(), {
+      action: "write_check",
+      dryRun: false,
+      metadata: { headSha: "abc123" }
+    });
     const unsupported = await executor.execute(workItem(), {
       action: "merge",
       dryRun: false,
@@ -192,6 +213,11 @@ describe("ActionExecutor", () => {
       metadata: { action: "write_check" }
     });
     expect(String(check.metadata.reason)).toContain("headSha");
+    expect(malformedCheck).toMatchObject({
+      outcome: "failed",
+      metadata: { action: "write_check" }
+    });
+    expect(String(malformedCheck.metadata.reason)).toContain("git commit SHA");
     expect(unsupported).toMatchObject({
       outcome: "failed",
       metadata: { action: "merge" }
@@ -219,6 +245,10 @@ function fakeGitHub(): GitHubWriteClient {
       return { applied: true, githubRequestId: "request-1", metadata: { releaseId: 1, ...input } };
     }
   };
+}
+
+function gitSha(): string {
+  return "0123456789abcdef0123456789abcdef01234567";
 }
 
 function workItem(overrides: Partial<Pick<WorkItem, "kind">> = {}): WorkItem {
