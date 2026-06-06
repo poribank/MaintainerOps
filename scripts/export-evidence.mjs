@@ -15,6 +15,7 @@ const evidence = {
   generatedAt: new Date().toISOString(),
   baseUrl,
   readyz: await getJson(`${baseUrl}/readyz`),
+  githubAppPermissions: await getJson(`${baseUrl}/api/github-app/permissions`),
   queue: await getJson(`${baseUrl}/api/queue`),
   metrics: await getJson(`${baseUrl}/api/pilot/metrics`),
   jobs: await getJson(`${baseUrl}/api/jobs`),
@@ -41,6 +42,7 @@ function renderMarkdown(data) {
   const metrics = data.metrics;
   const jobs = data.jobs.items ?? [];
   const audit = data.audit.entries ?? [];
+  const permissions = data.githubAppPermissions;
   const lines = [
     "# MaintainerOps Evidence Export",
     "",
@@ -51,6 +53,16 @@ function renderMarkdown(data) {
     `- API URL: ${data.baseUrl}`,
     `- Store: ${data.readyz.store}`,
     `- Queue: ${data.readyz.queue}`,
+    "",
+    "## GitHub App Permissions",
+    "",
+    "Minimum permissions:",
+    "",
+    ...formatPermissionEntries(permissions.minimum),
+    "",
+    "Optional permission modules:",
+    "",
+    ...formatPermissionEntries(permissions.optional),
     "",
     "## Pilot Metrics",
     "",
@@ -92,6 +104,14 @@ function renderMarkdown(data) {
   );
 
   return `${lines.join("\n")}\n`;
+}
+
+function formatPermissionEntries(value) {
+  if (!value || typeof value !== "object") {
+    return ["- Not reported"];
+  }
+
+  return Object.entries(value).map(([name, permission]) => `- ${name}: ${permission}`);
 }
 
 function parseArgs(argv) {
