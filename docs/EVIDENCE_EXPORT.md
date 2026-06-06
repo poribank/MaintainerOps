@@ -6,6 +6,7 @@ The generated evidence can show:
 
 - webhook ingest works;
 - PR, issue, release, and security work items are created;
+- the GitHub App permission profile is visible;
 - pilot metrics are available;
 - AI raw-content transfer remains disabled unless policy allows it;
 - scanner jobs and audit logs are visible.

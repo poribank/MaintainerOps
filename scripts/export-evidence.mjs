@@ -4,43 +4,58 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const args = parseArgs(process.argv.slice(2));
-const baseUrl = args.url ?? "http://localhost:3001";
-const outputDir = path.resolve(root, args.out ?? "evidence");
-const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-const jsonPath = path.join(outputDir, `maintainerops-evidence-${timestamp}.json`);
-const markdownPath = path.join(outputDir, `maintainerops-evidence-${timestamp}.md`);
 
-const evidence = {
-  generatedAt: new Date().toISOString(),
-  baseUrl,
-  readyz: await getJson(`${baseUrl}/readyz`),
-  queue: await getJson(`${baseUrl}/api/queue`),
-  metrics: await getJson(`${baseUrl}/api/pilot/metrics`),
-  jobs: await getJson(`${baseUrl}/api/jobs`),
-  audit: await getJson(`${baseUrl}/api/audit-log`)
-};
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  const result = await exportEvidence(parseArgs(process.argv.slice(2)));
+  console.log(JSON.stringify(result, null, 2));
+}
 
-await mkdir(outputDir, { recursive: true });
-await writeFile(jsonPath, `${JSON.stringify(evidence, null, 2)}\n`);
-await writeFile(markdownPath, renderMarkdown(evidence));
+export async function exportEvidence(args = {}) {
+  const baseUrl = normalizeBaseUrl(args.url ?? "http://localhost:3001");
+  const outputDir = path.resolve(root, args.out ?? "evidence");
+  const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+  const jsonPath = path.join(outputDir, `maintainerops-evidence-${timestamp}.json`);
+  const markdownPath = path.join(outputDir, `maintainerops-evidence-${timestamp}.md`);
 
-console.log(JSON.stringify({ jsonPath, markdownPath }, null, 2));
+  const evidence = {
+    generatedAt: new Date().toISOString(),
+    baseUrl,
+    readyz: await getJson(`${baseUrl}/readyz`),
+    githubAppPermissions: await getJson(`${baseUrl}/api/github-app/permissions`),
+    queue: await getJson(`${baseUrl}/api/queue`),
+    metrics: await getJson(`${baseUrl}/api/pilot/metrics`),
+    jobs: await getJson(`${baseUrl}/api/jobs`),
+    audit: await getJson(`${baseUrl}/api/audit-log`)
+  };
 
-async function getJson(url) {
+  await mkdir(outputDir, { recursive: true });
+  await writeFile(jsonPath, `${JSON.stringify(evidence, null, 2)}\n`);
+  await writeFile(markdownPath, renderMarkdown(evidence));
+
+  return { jsonPath, markdownPath };
+}
+
+export async function getJson(url) {
   const response = await fetch(url);
   const body = await response.text();
   if (!response.ok) {
-    throw new Error(`${url} returned ${response.status}: ${body}`);
+    throw new Error(`${url} returned ${response.status}: ${previewBody(body)}`);
   }
-  return JSON.parse(body);
+  try {
+    return JSON.parse(body);
+  } catch (error) {
+    throw new Error(
+      `${url} returned invalid JSON: ${error instanceof Error ? error.message : "Unknown parse error."}; body=${previewBody(body)}`
+    );
+  }
 }
 
-function renderMarkdown(data) {
+export function renderMarkdown(data) {
   const items = data.queue.items ?? [];
   const metrics = data.metrics;
   const jobs = data.jobs.items ?? [];
   const audit = data.audit.entries ?? [];
+  const permissions = data.githubAppPermissions ?? {};
   const lines = [
     "# MaintainerOps Evidence Export",
     "",
@@ -51,6 +66,16 @@ function renderMarkdown(data) {
     `- API URL: ${data.baseUrl}`,
     `- Store: ${data.readyz.store}`,
     `- Queue: ${data.readyz.queue}`,
+    "",
+    "## GitHub App Permissions",
+    "",
+    "Minimum permissions:",
+    "",
+    ...formatPermissionEntries(permissions.minimum),
+    "",
+    "Optional permission modules:",
+    "",
+    ...formatPermissionEntries(permissions.optional),
     "",
     "## Pilot Metrics",
     "",
@@ -94,7 +119,7 @@ function renderMarkdown(data) {
   return `${lines.join("\n")}\n`;
 }
 
-function parseArgs(argv) {
+export function parseArgs(argv) {
   const parsed = {};
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
@@ -109,4 +134,21 @@ function parseArgs(argv) {
     }
   }
   return parsed;
+}
+
+export function normalizeBaseUrl(value) {
+  return value.replace(/\/+$/, "");
+}
+
+function formatPermissionEntries(value) {
+  if (!value || typeof value !== "object") {
+    return ["- Not reported"];
+  }
+
+  return Object.entries(value).map(([name, permission]) => `- ${name}: ${permission}`);
+}
+
+function previewBody(body) {
+  const normalized = body.trim().replace(/\s+/g, " ");
+  return normalized.length > 300 ? `${normalized.slice(0, 300)}...` : normalized;
 }
