@@ -17,6 +17,8 @@ describe("scoreWorkItem", () => {
   });
 
   it("recognizes dependency and workflow paths", () => {
+    expect(isSecuritySensitivePath(".github/dependabot.yaml")).toBe(true);
+    expect(isSecuritySensitivePath("package.json")).toBe(true);
     expect(isSecuritySensitivePath("pnpm-lock.yaml")).toBe(true);
     expect(isSecuritySensitivePath("src/component.tsx")).toBe(false);
   });
