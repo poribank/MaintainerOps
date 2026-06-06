@@ -45,7 +45,7 @@ export function recommendIssueLabels(
   policy: MaintainerOpsPolicy = DEFAULT_POLICY
 ): Recommendation[] {
   const text = `${input.title}\n${input.body ?? ""}`;
-  const existing = new Set(input.labels ?? []);
+  const existing = new Set((input.labels ?? []).map(normalizeLabel));
   const allowed = new Set(policy.labels.allowed);
   const recommendations: Recommendation[] = [];
 
@@ -95,4 +95,8 @@ function needsReproduction(text: string, existing: Set<string>, allowed: Set<str
   const looksLikeBug = /\b(error|crash|bug|regression|broken|fails?|exception)\b/i.test(text);
   const hasSteps = /\b(steps to reproduce|reproduction|minimal repro|expected|actual)\b/i.test(text);
   return looksLikeBug && !hasSteps && allowed.has("needs-reproduction") && !existing.has("needs-reproduction");
+}
+
+function normalizeLabel(label: string): string {
+  return label.trim().toLowerCase();
 }

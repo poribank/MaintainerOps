@@ -60,7 +60,7 @@ const rawPolicySchema = z
       .optional(),
     labels: z
       .object({
-        allowed: z.array(z.string().min(1)).optional()
+        allowed: z.array(z.string().trim().min(1)).optional()
       })
       .optional(),
     policy: z
@@ -104,7 +104,7 @@ export function mergePolicy(raw: RawPolicy): MaintainerOpsPolicy {
       auditLogDays: raw.dataRetention?.auditLogDays ?? DEFAULT_POLICY.dataRetention.auditLogDays
     },
     labels: {
-      allowed: raw.labels?.allowed ?? DEFAULT_POLICY.labels.allowed
+      allowed: normalizeLabels(raw.labels?.allowed ?? DEFAULT_POLICY.labels.allowed)
     },
     policy: {
       requireSecurityMd: raw.policy?.requireSecurityMd ?? DEFAULT_POLICY.policy.requireSecurityMd,
@@ -151,4 +151,8 @@ export function canPersistRawContent(policy: MaintainerOpsPolicy): boolean {
 
 export function canSendContentToAi(policy: MaintainerOpsPolicy): boolean {
   return policy.ai.enabled && policy.ai.provider !== "disabled" && canPersistRawContent(policy);
+}
+
+function normalizeLabels(labels: string[]): string[] {
+  return Array.from(new Set(labels.map((label) => label.trim().toLowerCase())));
 }

@@ -24,4 +24,19 @@ labels:
 
     expect(recommendations.flatMap((item) => item.labels ?? [])).not.toContain("security");
   });
+
+  it("compares allowlisted and existing labels case-insensitively", () => {
+    const policy = parsePolicy(`
+version: 1
+labels:
+  allowed:
+    - " Security "
+`);
+
+    const allowed = recommendIssueLabels({ title: "Security token leak" }, policy);
+    expect(allowed.flatMap((item) => item.labels ?? [])).toContain("security");
+
+    const existing = recommendIssueLabels({ title: "Security token leak", labels: ["Security"] }, policy);
+    expect(existing.flatMap((item) => item.labels ?? [])).not.toContain("security");
+  });
 });
