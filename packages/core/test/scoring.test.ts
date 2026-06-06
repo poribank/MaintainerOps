@@ -20,4 +20,16 @@ describe("scoreWorkItem", () => {
     expect(isSecuritySensitivePath("pnpm-lock.yaml")).toBe(true);
     expect(isSecuritySensitivePath("src/component.tsx")).toBe(false);
   });
+
+  it("uses existing labels as risk signals", () => {
+    const score = scoreWorkItem({
+      kind: "issue",
+      labels: ["Security", "semver-major"]
+    });
+
+    expect(score.factors.map((factor) => factor.id)).toEqual(
+      expect.arrayContaining(["security-sensitive-files", "release-impact"])
+    );
+    expect(score.priority).toBe("normal");
+  });
 });
