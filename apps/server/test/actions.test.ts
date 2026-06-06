@@ -53,6 +53,36 @@ describe("ActionExecutor", () => {
     expect(result.metadata.labels).toEqual(["bug"]);
   });
 
+  it("passes release draft metadata to the GitHub write client", async () => {
+    const calls: Array<{ tagName: string; name?: string; body?: string }> = [];
+    const executor = new ActionExecutor({
+      ...fakeGitHub(),
+      async createReleaseDraft(_workItem, input) {
+        calls.push(input);
+        return {
+          applied: true,
+          githubRequestId: "request-release",
+          metadata: { releaseId: 1, releaseUrl: "https://github.com/org/repo/releases/tag/v1.2.3" }
+        };
+      }
+    });
+
+    const result = await executor.execute(workItem(), {
+      action: "create_release_draft",
+      dryRun: false,
+      metadata: {
+        tagName: "v1.2.3",
+        name: "v1.2.3",
+        body: "Release notes"
+      }
+    });
+
+    expect(result.outcome).toBe("applied");
+    expect(result.githubRequestId).toBe("request-release");
+    expect(result.metadata.releaseId).toBe(1);
+    expect(calls).toEqual([{ tagName: "v1.2.3", name: "v1.2.3", body: "Release notes" }]);
+  });
+
   it("fails GitHub write actions with invalid metadata before calling GitHub", async () => {
     const executor = new ActionExecutor(fakeGitHub());
 
@@ -71,6 +101,11 @@ describe("ActionExecutor", () => {
       dryRun: false,
       metadata: {}
     });
+    const release = await executor.execute(workItem(), {
+      action: "create_release_draft",
+      dryRun: false,
+      metadata: { name: "Missing tag" }
+    });
 
     expect(labels).toMatchObject({
       outcome: "failed",
@@ -86,6 +121,11 @@ describe("ActionExecutor", () => {
       outcome: "failed",
       metadata: { action: "merge" }
     });
+    expect(release).toMatchObject({
+      outcome: "failed",
+      metadata: { action: "create_release_draft" }
+    });
+    expect(String(release.metadata.reason)).toContain("tagName");
   });
 });
 
