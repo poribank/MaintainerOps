@@ -10,7 +10,7 @@ Please do not open public issues for suspected vulnerabilities. Use GitHub priva
 
 https://github.com/poribank/MaintainerOps/security/advisories/new
 
-If private reporting is unavailable, contact the maintainers listed in [GOVERNANCE.md](GOVERNANCE.md).
+If private reporting is unavailable, contact the maintainers listed in [MAINTAINERS.md](MAINTAINERS.md).
 
 Reports should include:
 
@@ -33,6 +33,8 @@ Related security documentation:
 - [Threat model](docs/THREAT_MODEL.md)
 - [GitHub App setup](docs/GITHUB_APP_SETUP.md)
 - [API credits and AI data handling plan](docs/API_CREDITS_PLAN.md)
+- [Repository settings](docs/REPOSITORY_SETTINGS.md)
+- [Support policy](SUPPORT.md)
 
 ## Repository security settings
 

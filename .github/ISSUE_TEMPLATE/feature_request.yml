@@ -18,6 +18,13 @@ body:
       description: Describe the behavior and any relevant GitHub/OpenSSF/OpenAI integration.
     validations:
       required: true
+  - type: textarea
+    id: success-criteria
+    attributes:
+      label: Success criteria
+      description: What observable result would prove this improves maintainer work?
+    validations:
+      required: true
   - type: dropdown
     id: automation-risk
     attributes:
@@ -26,5 +33,18 @@ body:
         - Report-only
         - Approval-gated write
         - Policy opt-in write
+    validations:
+      required: true
+  - type: dropdown
+    id: data-permissions
+    attributes:
+      label: Data and permission impact
+      description: Does this need new repository content access, raw AI content transfer, or GitHub App permissions?
+      options:
+        - No new data access or permissions
+        - New read-only metadata access
+        - New repository content access
+        - New GitHub write permission
+        - Unsure
     validations:
       required: true
