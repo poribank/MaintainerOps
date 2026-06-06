@@ -21,11 +21,12 @@
     "demo:replay": "node scripts/replay-webhook-fixtures.mjs",
     "evidence:export": "node scripts/export-evidence.mjs",
     "github:token": "node scripts/github-app-token.mjs",
+    "docs:links": "node scripts/verify-doc-links.mjs",
     "lint": "npm run lint --workspace @maintainerops/core && npm run build --workspace @maintainerops/core && npm run lint --workspace @maintainerops/server && npm run lint --workspace @maintainerops/web",
     "test": "npm run test --workspace @maintainerops/core && npm run build --workspace @maintainerops/core && npm run test --workspace @maintainerops/server && npm run test --workspace @maintainerops/web",
     "test:postgres": "npm run test:postgres --workspace @maintainerops/server",
     "typecheck": "npm run typecheck --workspace @maintainerops/core && npm run build --workspace @maintainerops/core && npm run typecheck --workspace @maintainerops/server && npm run typecheck --workspace @maintainerops/web",
-    "check": "npm run typecheck && npm run lint && npm run test && npm run build"
+    "check": "npm run docs:links && npm run typecheck && npm run lint && npm run test && npm run build"
   },
   "devDependencies": {
     "@types/node": "^25.9.1",

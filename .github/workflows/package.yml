@@ -26,6 +26,7 @@ jobs:
       - run: mkdir -p artifacts && npm pack --workspaces --pack-destination artifacts
       - run: docker build --pull -t maintainerops:${{ github.sha }} .
       - run: docker image inspect maintainerops:${{ github.sha }}
+      - run: docker compose config
       - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
         with:
           name: npm-workspace-tarballs
