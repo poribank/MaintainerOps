@@ -38,6 +38,7 @@ MaintainerOps is in early public pilot hardening. The main branch includes a wor
 
 - GitHub rulesets and branch protection ingestion.
 - CodeQL, Dependabot, secret scanning, and repository advisory synchronization.
+- OpenSSF Scorecard remediation tracking in `docs/SCORECARD_REMEDIATION.md`.
 - SLSA provenance checks.
 - Release readiness reports.
 - Security Insights validation.
