@@ -24,6 +24,8 @@ export function calculateReleaseReadiness(
 ): ReleaseReadiness {
   const blockers: Finding[] = [];
   const warnings: Finding[] = [];
+  const failedRequiredChecks = nonEmptyStrings(input.failedRequiredChecks);
+  const breakingChangeCandidates = nonEmptyStrings(input.breakingChangeCandidates);
 
   if (policy.release.blockOnUnresolvedAdvisory && (input.unresolvedAdvisories ?? 0) > 0) {
     blockers.push({
@@ -35,7 +37,7 @@ export function calculateReleaseReadiness(
     });
   }
 
-  if ((input.failedRequiredChecks ?? []).length > 0) {
+  if (failedRequiredChecks.length > 0) {
     const finding: Finding = {
       id: "release:failed-required-checks",
       title: "Required checks are failing",
@@ -43,8 +45,7 @@ export function calculateReleaseReadiness(
       source: "release",
       description: "One or more required checks failed."
     };
-    const evidence = input.failedRequiredChecks?.join(", ");
-    if (evidence) finding.evidence = evidence;
+    finding.evidence = failedRequiredChecks.join(", ");
     blockers.push(finding);
   }
 
@@ -68,7 +69,7 @@ export function calculateReleaseReadiness(
     });
   }
 
-  if ((input.breakingChangeCandidates ?? []).length > 0) {
+  if (breakingChangeCandidates.length > 0) {
     const finding: Finding = {
       id: "release:breaking-change-candidates",
       title: "Breaking change candidates need review",
@@ -76,8 +77,7 @@ export function calculateReleaseReadiness(
       source: "release",
       description: "Merged changes look potentially breaking."
     };
-    const evidence = input.breakingChangeCandidates?.join(", ");
-    if (evidence) finding.evidence = evidence;
+    finding.evidence = breakingChangeCandidates.join(", ");
     warnings.push(finding);
   }
 
@@ -109,4 +109,8 @@ export function calculateReleaseReadiness(
       }
     ]
   };
+}
+
+function nonEmptyStrings(values: string[] | undefined): string[] {
+  return (values ?? []).map((value) => value.trim()).filter((value) => value.length > 0);
 }

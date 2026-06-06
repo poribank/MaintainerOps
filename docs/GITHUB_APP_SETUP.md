@@ -128,6 +128,16 @@ Write actions still require:
 
 MaintainerOps does not auto-merge, auto-approve, or auto-request changes.
 
+Verify release draft permissions before a live pilot action:
+
+```sh
+GITHUB_REPOSITORY=owner/name \
+GITHUB_INSTALLATION_ID=<installation-id> \
+npm run github:release-smoke
+```
+
+The smoke test creates a draft release, uploads a small JSON asset, and deletes both by default. It requires `Contents: read and write` on the GitHub App installation. Use `--keep-release` only when you intentionally want to inspect the draft in GitHub afterward.
+
 ## 7. Evidence to Capture
 
 For the Codex for Open Source application or follow-up:
