@@ -133,6 +133,35 @@ describe("Maintainer AI assistant", () => {
     });
   });
 
+  it("normalizes blank and mixed-type OpenAI response fields", async () => {
+    stubOpenAi(
+      new Response(
+        JSON.stringify({
+          output_text: JSON.stringify({
+            summary: "   ",
+            rationale: ["  Evidence from policy.  ", "", 42],
+            suggestedActions: [null, "   "],
+            safetyNotes: "Keep a maintainer in the loop."
+          })
+        }),
+        { status: 200, headers: { "content-type": "application/json" } }
+      )
+    );
+    const assistant = new OpenAiMaintainerAssistant(config({ provider: "openai", apiKey: "test-key" }));
+
+    await expect(
+      assistant.assist(workItem(), {
+        kind: "release_readiness",
+        includeRawContent: false
+      })
+    ).resolves.toMatchObject({
+      summary: "No summary returned.",
+      rationale: ["Evidence from policy."],
+      suggestedActions: ["Review the work item manually."],
+      safetyNotes: ["Maintainer approval remains required."]
+    });
+  });
+
   it("surfaces provider failures without parsing a success body", async () => {
     stubOpenAi(new Response("rate limited", { status: 429 }));
     const assistant = new OpenAiMaintainerAssistant(config({ provider: "openai", apiKey: "test-key" }));

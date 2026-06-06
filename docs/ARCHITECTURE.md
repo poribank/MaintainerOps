@@ -24,6 +24,12 @@ GitHub write actions are dry-run unless the caller sends `dryRun:false`, GitHub 
 
 Every write action is tied to an actor and audit log entry. Failed writes are also audit logged with `outcome=failed`.
 
+## AI Assistance Flow
+
+AI assistance is optional and disabled by default. The server builds provider prompts from normalized work item metadata unless a caller explicitly requests raw content and supplies a repository policy source that allows raw-content transfer. Raw-content attempts are audit logged whether they are accepted or rejected.
+
+The provider response is normalized into a summary, rationale, suggested actions, and safety notes. MaintainerOps treats AI output as advisory text only; it does not bypass action approval, GitHub write gates, or repository policy.
+
 ## Scanner flow
 
 Scorecard uses `scorecard --repo=github.com/owner/name --format=json` and inherits `GITHUB_AUTH_TOKEN` from the server or worker environment when present. OSV Scanner uses `osv-scanner scan source --format json -r <path>`, limited to paths inside `SCANNER_WORKSPACE_ROOT`. The root defaults to the npm invocation directory so workspace commands still scan the repository root instead of only `apps/server`.
