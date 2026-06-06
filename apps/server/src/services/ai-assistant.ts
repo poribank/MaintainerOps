@@ -64,8 +64,14 @@ export class OpenAiMaintainerAssistant implements MaintainerAiAssistant {
 
   async assist(workItem: WorkItem, request: AiAssistanceRequest): Promise<AiAssistanceResult> {
     const rawContent = request.includeRawContent ? request.rawContent ?? "" : "";
-    const redactedRawContent = rawContent ? redactSensitiveText(rawContent).slice(0, this.config.ai.maxInputChars) : "";
-    const input = buildAssistantInput(workItem, request.kind, redactedRawContent);
+    const sanitizedRawContent = rawContent ? redactSensitiveText(rawContent) : "";
+    const rawContentWasRedacted = sanitizedRawContent !== rawContent;
+    const redactedRawContent = sanitizedRawContent.slice(0, this.config.ai.maxInputChars);
+    const rawContentWasTruncated = redactedRawContent !== sanitizedRawContent;
+    const input = buildAssistantInput(workItem, request.kind, redactedRawContent, {
+      rawContentWasRedacted,
+      rawContentWasTruncated
+    });
 
     const response = await fetch("https://api.openai.com/v1/responses", {
       method: "POST",
@@ -102,7 +108,7 @@ export class OpenAiMaintainerAssistant implements MaintainerAiAssistant {
       model: this.config.ai.model,
       ...parsed,
       usedRawContent: redactedRawContent.length > 0,
-      redacted: redactedRawContent !== rawContent
+      redacted: rawContentWasRedacted || rawContentWasTruncated
     };
   }
 }
@@ -144,7 +150,12 @@ interface OpenAiResponsesBody {
   output_text?: string;
 }
 
-function buildAssistantInput(workItem: WorkItem, kind: AiAssistanceKind, redactedRawContent: string): string {
+function buildAssistantInput(
+  workItem: WorkItem,
+  kind: AiAssistanceKind,
+  redactedRawContent: string,
+  safety: { rawContentWasRedacted: boolean; rawContentWasTruncated: boolean }
+): string {
   const payload = {
     task: kind,
     instruction:
@@ -165,7 +176,8 @@ function buildAssistantInput(workItem: WorkItem, kind: AiAssistanceKind, redacte
       noAutomerge: true,
       noAutoApproval: true,
       approvalRequiredForWrites: true,
-      rawContentWasRedacted: Boolean(redactedRawContent)
+      rawContentWasRedacted: safety.rawContentWasRedacted,
+      rawContentWasTruncated: safety.rawContentWasTruncated
     }
   };
 
