@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { actionRequestDryRun, buildStats, readApiError, scanSummary, type WorkItem } from "./App.js";
+import { actionRequestDryRun, buildStats, readApiError, readJsonBody, scanSummary, type WorkItem } from "./App.js";
 
 describe("dashboard helpers", () => {
   it("builds queue stats from work item risk and status", () => {
@@ -41,6 +41,14 @@ describe("dashboard helpers", () => {
     ).resolves.toBe("Body must be a JSON object.");
 
     await expect(readApiError(new Response("", { status: 500 }), "Action failed")).resolves.toBe("Action failed: 500");
+  });
+
+  it("reads optional JSON bodies without throwing on malformed responses", async () => {
+    await expect(readJsonBody<{ ok: boolean }>(new Response(JSON.stringify({ ok: true })))).resolves.toEqual({
+      ok: true
+    });
+    await expect(readJsonBody(new Response("not-json", { status: 502 }))).resolves.toBeUndefined();
+    await expect(readJsonBody(new Response(null, { status: 204 }))).resolves.toBeUndefined();
   });
 });
 
