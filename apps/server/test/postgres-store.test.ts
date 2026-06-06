@@ -41,6 +41,44 @@ describePostgres("PostgresMaintainerStore", () => {
 
     expect((await store.getWorkItem(item.id))?.status).toBe("triaged");
   });
+
+  it("returns merged work items from repeated webhook ingests", async () => {
+    const item = workItem("open", "delivery-1");
+    await store.ingest("delivery-1", [item], "issues");
+    await store.recordAction(item.id, {
+      actor: "maintainer",
+      action: "triage",
+      dryRun: false,
+      outcome: "applied"
+    });
+
+    const result = await store.ingest("delivery-2", [workItem("open", "delivery-2")], "issues");
+
+    expect(result.items[0]?.status).toBe("triaged");
+    expect(result.items[0]?.sourceDeliveryIds).toEqual(["delivery-1", "delivery-2"]);
+    expect((await store.getWorkItem(item.id))?.status).toBe("triaged");
+  });
+
+  it("preserves repository metadata when later webhooks omit optional fields", async () => {
+    const first = workItem("open", "delivery-1");
+    first.repository.id = 123;
+    first.repository.installationId = 456;
+    first.repository.defaultBranch = "main";
+
+    await store.ingest("delivery-1", [first], "issues");
+    await store.ingest("delivery-2", [workItem("open", "delivery-2")], "issues");
+
+    expect((await store.getWorkItem(first.id))?.repository).toMatchObject({
+      id: 123,
+      installationId: 456,
+      defaultBranch: "main"
+    });
+    expect((await store.listRepositories())[0]).toMatchObject({
+      id: 123,
+      installationId: 456,
+      defaultBranch: "main"
+    });
+  });
 });
 
 function workItem(status: WorkItem["status"], deliveryId: string): WorkItem {

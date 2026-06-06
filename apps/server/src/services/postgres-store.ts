@@ -36,13 +36,14 @@ export class PostgresMaintainerStore implements MaintainerStore {
         return { accepted: false, items: [] };
       }
 
+      const storedItems: WorkItem[] = [];
       for (const item of items) {
         await upsertRepository(client, item.repository);
-        await upsertWorkItem(client, item);
+        storedItems.push(await upsertWorkItem(client, item));
       }
 
       await client.query("COMMIT");
-      return { accepted: true, items };
+      return { accepted: true, items: storedItems };
     } catch (error) {
       await client.query("ROLLBACK");
       throw error;
@@ -205,6 +206,7 @@ function shouldApplyQueueStatusAction(action: string, dryRun: boolean, outcome: 
 }
 
 async function upsertRepository(client: PoolClient, repository: GitHubRepositoryRef): Promise<void> {
+  const hasRepositoryId = repository.id !== undefined;
   if (repository.installationId) {
     await client.query(
       `INSERT INTO installations (id, account_login)
@@ -218,12 +220,12 @@ async function upsertRepository(client: PoolClient, repository: GitHubRepository
     `INSERT INTO repositories (id, installation_id, owner, name, full_name, is_private, default_branch)
      VALUES ($1, $2, $3, $4, $5, $6, $7)
      ON CONFLICT (full_name) DO UPDATE SET
-       id = EXCLUDED.id,
-       installation_id = EXCLUDED.installation_id,
+       id = CASE WHEN $8 THEN EXCLUDED.id ELSE repositories.id END,
+       installation_id = COALESCE(EXCLUDED.installation_id, repositories.installation_id),
        owner = EXCLUDED.owner,
        name = EXCLUDED.name,
        is_private = EXCLUDED.is_private,
-       default_branch = EXCLUDED.default_branch,
+       default_branch = COALESCE(EXCLUDED.default_branch, repositories.default_branch),
        updated_at = now()`,
     [
       repository.id ?? stableRepositoryId(repository.fullName),
@@ -232,12 +234,13 @@ async function upsertRepository(client: PoolClient, repository: GitHubRepository
       repository.name,
       repository.fullName,
       repository.private,
-      repository.defaultBranch ?? null
+      repository.defaultBranch ?? null,
+      hasRepositoryId
     ]
   );
 }
 
-async function upsertWorkItem(client: PoolClient, item: WorkItem): Promise<void> {
+async function upsertWorkItem(client: PoolClient, item: WorkItem): Promise<WorkItem> {
   const existing = await client.query("SELECT payload FROM work_items WHERE id = $1", [item.id]);
   const itemToStore =
     existing.rowCount && existing.rows[0]?.payload
@@ -264,9 +267,10 @@ async function upsertWorkItem(client: PoolClient, item: WorkItem): Promise<void>
       itemToStore.externalId,
       itemToStore,
       itemToStore.createdAt,
-      itemToStore.updatedAt
+     itemToStore.updatedAt
     ]
   );
+  return itemToStore;
 }
 
 async function updateWorkItemPayload(client: PoolClient, item: WorkItem): Promise<void> {
