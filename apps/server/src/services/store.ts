@@ -33,6 +33,7 @@ export interface IngestResult {
 export type Awaitable<T> = T | Promise<T>;
 
 export interface MaintainerStore {
+  ready?(): Awaitable<void>;
   hasDelivery(deliveryId: string): Awaitable<boolean>;
   ingest(deliveryId: string, items: WorkItem[], eventName?: string): Awaitable<IngestResult>;
   listWorkItems(filter?: QueueFilter): Awaitable<WorkItem[]>;
