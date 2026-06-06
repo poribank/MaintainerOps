@@ -1,9 +1,10 @@
-import { chmod, mkdir, writeFile } from "node:fs/promises";
+import { realpathSync } from "node:fs";
+import { chmod, mkdir, mkdtemp, symlink, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { loadConfig } from "../src/config.js";
-import { SecurityScannerRunner } from "../src/services/scanners.js";
+import { resolveSafePath, SecurityScannerRunner } from "../src/services/scanners.js";
 
 describe("SecurityScannerRunner", () => {
   it("reports unavailable scanners without throwing", async () => {
@@ -29,22 +30,40 @@ describe("SecurityScannerRunner", () => {
     const runner = new SecurityScannerRunner(loadConfig({ NODE_ENV: "test" }));
 
     await expect(runner.runScorecard("bad repo")).rejects.toThrow("owner/name");
+    await expect(runner.runScorecard("../repo")).rejects.toThrow("owner/name");
+    await expect(runner.runScorecard("org/..")).rejects.toThrow("owner/name");
     await expect(runner.runOsvScanner("../")).rejects.toThrow("inside the MaintainerOps workspace");
   });
 
   it("resolves OSV scan paths from the configured workspace root", async () => {
+    const workspaceRoot = await mkdtemp(path.join(os.tmpdir(), "maintainerops-root-"));
     const runner = new SecurityScannerRunner(
       loadConfig({
         NODE_ENV: "test",
-        INIT_CWD: "/tmp/maintainerops-root",
+        INIT_CWD: workspaceRoot,
         OSV_SCANNER_COMMAND: "maintainerops-osv-not-installed"
       })
     );
 
     const result = await runner.runOsvScanner(".");
 
-    expect(result.args).toContain("/tmp/maintainerops-root");
+    expect(result.args).toContain(realpathSync(workspaceRoot));
     await expect(runner.runOsvScanner("../")).rejects.toThrow("inside the MaintainerOps workspace");
+  });
+
+  it("rejects OSV scan paths that escape through symlinks", async () => {
+    const workspace = await mkdtemp(path.join(os.tmpdir(), "maintainerops-workspace-"));
+    const outside = await mkdtemp(path.join(os.tmpdir(), "maintainerops-outside-"));
+    await symlink(outside, path.join(workspace, "outside-link"), "dir");
+
+    expect(() => resolveSafePath(workspace, "outside-link")).toThrow("inside the MaintainerOps workspace");
+  });
+
+  it("rejects missing OSV workspace roots and scan paths before running scanners", async () => {
+    const workspace = await mkdtemp(path.join(os.tmpdir(), "maintainerops-workspace-"));
+
+    expect(() => resolveSafePath(path.join(workspace, "missing-root"), ".")).toThrow("workspace root must exist");
+    expect(() => resolveSafePath(workspace, "missing-path")).toThrow("scan path must exist");
   });
 
   it("returns failed when a scanner command times out", async () => {
@@ -78,6 +97,23 @@ describe("SecurityScannerRunner", () => {
       status: "completed",
       command,
       json: { results: [{ id: "GHSA-demo" }] }
+    });
+  });
+
+  it("fails successful scanner commands that return invalid JSON", async () => {
+    const command = await writeExecutable("invalid-json-scanner", "printf 'not json'\n");
+    const runner = new SecurityScannerRunner(
+      loadConfig({
+        NODE_ENV: "test",
+        SCORECARD_COMMAND: command
+      })
+    );
+
+    await expect(runner.runScorecard("org/repo")).resolves.toMatchObject({
+      scanner: "scorecard",
+      status: "failed",
+      command,
+      error: "scorecard did not return valid JSON."
     });
   });
 });

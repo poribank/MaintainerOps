@@ -1,4 +1,5 @@
 import { execFile } from "node:child_process";
+import { realpathSync } from "node:fs";
 import path from "node:path";
 import { promisify } from "node:util";
 import type { AppConfig } from "../config.js";
@@ -43,6 +44,18 @@ async function runJsonCommand(
       timeout: timeoutMs,
       maxBuffer: 1024 * 1024 * 20
     });
+    const parsedJson = parseOptionalJson(result.stdout);
+    if (parsedJson === undefined) {
+      return {
+        scanner,
+        status: "failed",
+        command,
+        args,
+        stdout: result.stdout,
+        stderr: result.stderr,
+        error: `${scanner} did not return valid JSON.`
+      };
+    }
     return {
       scanner,
       status: "completed",
@@ -50,7 +63,7 @@ async function runJsonCommand(
       args,
       stdout: result.stdout,
       stderr: result.stderr,
-      json: parseOptionalJson(result.stdout)
+      json: parsedJson
     };
   } catch (error) {
     const executionError = error as NodeJS.ErrnoException & { stdout?: string; stderr?: string };
@@ -67,7 +80,7 @@ async function runJsonCommand(
       };
     }
 
-    if (parsedJson) {
+    if (parsedJson !== undefined) {
       return {
         scanner,
         status: "completed",
@@ -100,16 +113,32 @@ function parseOptionalJson(value: string): unknown | undefined {
 }
 
 export function assertRepositoryFullName(value: string): void {
-  if (!/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(value)) {
+  const segments = value.split("/");
+  if (
+    segments.length !== 2 ||
+    segments.some((segment) => segment === "." || segment === "..") ||
+    !/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(value)
+  ) {
     throw new Error("Repository must be in owner/name format.");
   }
 }
 
 export function resolveSafePath(workspaceRoot: string, targetPath: string): string {
-  const base = path.resolve(workspaceRoot);
-  const resolved = path.resolve(base, targetPath || ".");
+  const base = realpathOrThrow(path.resolve(workspaceRoot), "OSV scan workspace root must exist.");
+  const resolved = realpathOrThrow(
+    path.resolve(base, targetPath || "."),
+    "OSV scan path must exist inside the MaintainerOps workspace."
+  );
   if (resolved !== base && !resolved.startsWith(`${base}${path.sep}`)) {
     throw new Error("OSV scan path must be inside the MaintainerOps workspace.");
   }
   return resolved;
+}
+
+function realpathOrThrow(value: string, message: string): string {
+  try {
+    return realpathSync(value);
+  } catch {
+    throw new Error(message);
+  }
 }
