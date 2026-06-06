@@ -44,7 +44,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
   const ai: AppConfig["ai"] = {
     provider: parseAiProvider(env.AI_PROVIDER),
     model: env.OPENAI_MODEL || "chat-latest",
-    maxInputChars: Number.parseInt(env.AI_MAX_INPUT_CHARS || "12000", 10)
+    maxInputChars: parseInteger(env.AI_MAX_INPUT_CHARS, 12000, { min: 1 })
   };
   const storage: AppConfig["storage"] = {
     driver: env.STORE_DRIVER === "postgres" ? "postgres" : "memory"
@@ -65,7 +65,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
   return {
     nodeEnv: env.NODE_ENV || "development",
     host: env.HOST || "0.0.0.0",
-    port: Number.parseInt(env.PORT || "3000", 10),
+    port: parseInteger(env.PORT, 3000, { min: 0 }),
     webOrigin: env.WEB_ORIGIN || "http://localhost:5173",
     github,
     storage,
@@ -75,7 +75,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
       scorecardCommand: env.SCORECARD_COMMAND || "scorecard",
       osvScannerCommand: env.OSV_SCANNER_COMMAND || "osv-scanner",
       workspaceRoot: path.resolve(env.SCANNER_WORKSPACE_ROOT || env.INIT_CWD || process.cwd()),
-      timeoutMs: Number.parseInt(env.SCANNER_TIMEOUT_MS || "120000", 10)
+      timeoutMs: parseInteger(env.SCANNER_TIMEOUT_MS, 120000, { min: 1 })
     },
     seedDemoData: env.SEED_DEMO_DATA !== "false"
   };
@@ -86,4 +86,15 @@ function parseAiProvider(value: string | undefined): AppConfig["ai"]["provider"]
     return value;
   }
   return "disabled";
+}
+
+function parseInteger(value: string | undefined, fallback: number, options: { min: number }): number {
+  if (!value || !/^-?\d+$/.test(value.trim())) {
+    return fallback;
+  }
+  const parsed = Number.parseInt(value, 10);
+  if (!Number.isSafeInteger(parsed) || parsed < options.min) {
+    return fallback;
+  }
+  return parsed;
 }
