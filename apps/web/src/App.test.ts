@@ -7,13 +7,27 @@ describe("dashboard helpers", () => {
       workItem({ id: "issue:org/repo:1", kind: "issue", status: "open", priority: "urgent" }),
       workItem({ id: "pr:org/repo:2", kind: "pull_request", status: "triaged", priority: "normal" }),
       workItem({ id: "security:org/repo:3", kind: "security", status: "open", priority: "high" }),
-      workItem({ id: "release:org/repo:v1", kind: "release", status: "resolved", priority: "low" })
+      workItem({ id: "release:org/repo:v1", kind: "release", status: "resolved", priority: "low" }),
+      workItem({
+        id: "issue:org/repo:4",
+        kind: "issue",
+        status: "triaged",
+        priority: "normal",
+        labels: [" Security "]
+      }),
+      workItem({
+        id: "issue:org/repo:security-finding",
+        kind: "issue",
+        status: "open",
+        priority: "normal",
+        findings: [{ id: "security:alert", source: "security" }]
+      })
     ]);
 
     expect(stats).toEqual({
-      open: 2,
+      open: 3,
       urgent: 1,
-      security: 1,
+      security: 3,
       repositories: 1
     });
   });
@@ -49,6 +63,8 @@ function workItem(input: {
   kind: WorkItem["kind"];
   status: WorkItem["status"];
   priority: WorkItem["analysis"]["risk"]["priority"];
+  labels?: string[];
+  findings?: Array<Pick<WorkItem["analysis"]["findings"][number], "id" | "source">>;
 }): WorkItem {
   return {
     id: input.id,
@@ -60,7 +76,7 @@ function workItem(input: {
     },
     title: input.id,
     updatedAt: "2026-06-05T00:00:00.000Z",
-    labels: [],
+    labels: input.labels ?? [],
     analysis: {
       summary: "Needs review.",
       risk: {
@@ -68,7 +84,13 @@ function workItem(input: {
         priority: input.priority,
         factors: []
       },
-      findings: [],
+      findings:
+        input.findings?.map((finding) => ({
+          title: finding.id,
+          severity: "high",
+          description: "Security signal.",
+          ...finding
+        })) ?? [],
       recommendations: []
     }
   };

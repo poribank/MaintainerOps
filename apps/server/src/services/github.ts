@@ -193,6 +193,10 @@ export class OctokitGitHubWriteClient implements GitHubWriteClient {
 }
 
 function formatRecommendations(recommendations: Recommendation[]): string {
+  if (recommendations.length === 0) {
+    return "No MaintainerOps recommendations for this work item.";
+  }
+
   return recommendations
     .map((recommendation) => `- ${recommendation.title}: ${recommendation.description}`)
     .join("\n");

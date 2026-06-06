@@ -158,6 +158,7 @@ export function App() {
     [filter, items]
   );
   const selected = filteredItems.find((item) => item.id === selectedId) ?? filteredItems[0];
+  const selectedItemId = selected?.id ?? "";
   const stats = useMemo(() => buildStats(items), [items]);
 
   async function loadQueue() {
@@ -272,6 +273,12 @@ export function App() {
   useEffect(() => {
     void loadQueue();
   }, []);
+
+  useEffect(() => {
+    setAiAssistance(null);
+    setScanResult(null);
+    setError("");
+  }, [selectedItemId]);
 
   return (
     <main className="app-shell">
@@ -581,9 +588,21 @@ export function buildStats(items: WorkItem[]) {
   return {
     open: items.filter((item) => item.status === "open").length,
     urgent: items.filter((item) => item.analysis.risk.priority === "urgent").length,
-    security: items.filter((item) => item.kind === "security" || item.labels.includes("security")).length,
+    security: items.filter(hasSecuritySignal).length,
     repositories: new Set(items.map((item) => item.repository.fullName)).size
   };
+}
+
+function hasSecuritySignal(item: WorkItem): boolean {
+  return (
+    item.kind === "security" ||
+    item.labels.some(isSecurityLabel) ||
+    item.analysis.findings.some((finding) => finding.source === "security")
+  );
+}
+
+function isSecurityLabel(label: string): boolean {
+  return label.trim().toLowerCase() === "security";
 }
 
 export function scanSummary(json: unknown): string {
